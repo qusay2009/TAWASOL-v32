@@ -307,29 +307,43 @@ async function action(db, u, a, us) {
       break;
     }
     case 'acceptFollow': {
-      // Current user accepts a follow request from a.id
+      // Current user (B) accepts a follow request from a.id (A)
+      // Result: MUTUAL friendship — both follow each other
       const requester = us.find(x => x.id === a.id && x.active);
       if (!requester) fail(404, 'غير موجود');
-      // Add requester to my followers (they follow me)
+
+      // 1. A follows B (requester follows current user)
       if (!requester.following) requester.following = [];
       if (!requester.following.includes(id)) {
         requester.following = [...requester.following, id];
         await sql`INSERT INTO follows(follower_id, following_id) VALUES(${a.id}, ${id}) ON CONFLICT DO NOTHING`;
-        await storeUser(requester);
       }
       // Remove pending from requester
       if (requester.pendingFollows) {
         requester.pendingFollows = requester.pendingFollows.filter(x => x !== id);
-        await storeUser(requester);
       }
+      await storeUser(requester);
+
+      // 2. B follows A (current user follows requester) — MUTUAL
+      if (!u.following) u.following = [];
+      if (!u.following.includes(a.id)) {
+        u.following = [...u.following, a.id];
+        await sql`INSERT INTO follows(follower_id, following_id) VALUES(${id}, ${a.id}) ON CONFLICT DO NOTHING`;
+      }
+      await storeUser(u);
+
+      // Update us array
+      const meInUs2 = us.find(x => x.id === id);
+      if (meInUs2) meInUs2.following = u.following;
+
       // Remove the follow request notification
       db.notifications = db.notifications.filter(n =>
         !(n.to === id && n.type === 'followRequest' && n.fromId === a.id));
       await sql`DELETE FROM notifications WHERE recipient=${id} AND type='followRequest' AND from_id=${a.id}`;
-      // Notify the requester they were accepted
+
+      // Notify the requester: you are now friends!
       const acceptNotifId = randomUUID();
-      const isMutualNow = (u.following || []).includes(a.id);
-      const acceptText = isMutualNow ? ('أصبحتم أصدقاء الآن أنت و' + u.name + ' ✨') : (u.name + ' قبل طلب متابعتك ✓');
+      const acceptText = 'أصبحتم أصدقاء الآن أنت و' + u.name + ' ✨';
       db.notifications.push({ id: acceptNotifId, to: a.id, text: acceptText, type: 'followAccepted', read: false, time: Date.now() });
       await sql`INSERT INTO notifications(id, recipient, text, read, type)
         VALUES(${acceptNotifId}, ${a.id}, ${acceptText}, false, 'followAccepted') ON CONFLICT DO NOTHING`;

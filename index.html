@@ -8,7 +8,7 @@
 @media(min-width:1000px){.watch-room{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(180px,1fr);gap:18px}.watch-video{min-width:0}.watch-chat{border-right:1px solid var(--line);padding-right:16px}}
 /* TAWASOL / After Hours — plum, acid lime, warm coral */
 :root{--bg:#070d1a;--card:#0e1829;--ink:#e8f0ff;--muted:#8899bb;--line:#1e3060;--blue:#60a8ff;--soft:#60a8ff15;--shadow:0 12px 50px #00040d40;--coral:#ff7eb3;--plum:#0a1535;--accent:#a78bfa}
-body:not(.dark){--bg:#f0f4ff;--card:#ffffff;--ink:#0a1535;--muted:#5570a0;--line:#c8d8f8;--blue:#2563eb;--soft:#2563eb12;--shadow:0 12px 50px #2563eb08;--plum:#e8f0ff;--accent:#7c3aed}
+body:not(.dark){--bg:#f6f3ec;--card:#fffdf8;--ink:#35243a;--muted:#88798b;--line:#36203910;--blue:#5d741f;--soft:#d3ef8a27;--shadow:0 12px 50px #37243c06;--plum:#eadfec}
 body{font-family:"IBM Plex Sans Arabic","Segoe UI",Tahoma,Arial,sans-serif;background:var(--bg);transition:background .35s,color .35s;isolation:isolate}
 body:before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;background:radial-gradient(ellipse at 15% 50%,#1e40af12,transparent 50%),radial-gradient(ellipse at 85% 10%,#7c3aed10,transparent 45%),radial-gradient(ellipse at 50% 90%,#0369a110,transparent 50%);background-size:150% 150%;animation:ambient 25s ease-in-out infinite alternate}
 #cursorGlow{position:fixed;left:0;top:0;width:400px;height:400px;border-radius:50%;pointer-events:none;z-index:-1;background:radial-gradient(circle,#60a8ff0a,transparent 65%);transform:translate(-800px,-800px)}
@@ -414,7 +414,7 @@ if(ab){
 $('#mini').innerHTML='<div class="row side-profile">'+avatar(me())+'<div><b>'+esc(me().name)+'</b> '+(isAdmin?'<span class="pill" style="color:var(--coral);font-size:10px">مالك 👑</span>':'')+'<div class="muted">'+db.users.filter(mutual).length+' أصدقاء</div></div></div>';
 const unreadMsgs=db.messages.filter(m=>m.to===current&&!m.readAt).length;
 const unreadNotifs=db.notifications.filter(n=>n.to===current&&!n.read).length;
-const nav=[['home','home','الرئيسية',0],['messages','chat','الرسائل',unreadMsgs],['friends','users','الأصدقاء',0],['search','search','البحث',0],['notifications','bell','الإشعارات',unreadNotifs],['groups','grid','المجتمعات',0],['watch','play','غرفة المشاهدة',0],['profile','user','الملف الشخصي',0]];
+const nav=[['home','home','الرئيسية',0],['messages','chat','الرسائل',unreadMsgs],['friends','users','الأصدقاء',0],['search','search','البحث',0],['notifications','bell','الإشعارات',unreadNotifs],['groups','grid','المجتمعات',0],['watch','play','غرفة المشاهدة',0],['profile','user','الملف الشخصي',0],['about','heart','حول تواصل',0]];
 if(isAdmin)nav.push(['admin','shield','لوحة الإدارة 🛡️',0]);
 if(page==='admin'&&!isAdmin)page='home';
 $('#nav').innerHTML=nav.map(([p,i,t,c])=>'<button class="'+(page===p?'active':'')+'" onclick="go(\''+p+'\''+(p==='profile'?',current':'')+')">'+icon(i)+t+(c>0?'<span class="badge-count">'+c+'</span>':'')+'</button>').join('');
@@ -428,8 +428,8 @@ if(!fab){fab=document.createElement('button');fab.id='mobileFab';fab.className='
 const side=document.querySelector('.side');side.querySelector('.hint')?.remove();
 side.querySelectorAll(':scope > button').forEach(b=>{if(b.getAttribute('onclick')?.includes('settings'))b.innerHTML=icon('settings')+'الإعدادات';else if(b.getAttribute('onclick')?.includes('logout'))b.innerHTML=icon('logout')+'تسجيل الخروج'});
 const groupsView=db.groups.slice(0,3).map(g=>'<button class="row" style="width:100%;justify-content:start;margin:10px 0" onclick="go(\'groups\')"><span class="round-icon">'+icon('grid')+'</span><div style="text-align:right"><b>'+esc(g.name)+'</b><div class="muted">'+g.members.length+' أعضاء</div></div></button>').join('');
-$('#right').innerHTML='<div class="card"><div class="eyebrow">INNER CIRCLE</div><h2 style="margin-top:12px">مساحتك الأقرب.</h2><div class="small-rule"></div><p class="tagline">ما تشاركه هنا، يبقى بينك<br>وبين أصدقائك.</p><div class="row between"><span class="muted">الأصدقاء</span><strong style="font-size:30px;color:var(--blue)">'+db.users.filter(mutual).length+'</strong></div><button class="quiet" style="width:100%;margin-top:12px" onclick="go(\'search\')">'+icon('search')+'ابحث عن صديق</button></div><div class="card"><h2>مجتمعاتك</h2>'+(groupsView||'<p class="muted">لكل شغف مساحة.</p>')+'<button class="follow" onclick="go(\'groups\')">اكتشف المجتمعات ←</button></div><div class="card" style="background:var(--plum)"><div class="round-icon">'+icon('play')+'</div><h2 style="margin:15px 0">نفس اللحظة.<br>مع أصدقائك.</h2><button class="primary" onclick="go(\'watch\')">أنشئ غرفة</button></div><div class="footer" style="direction:ltr;text-align:center;letter-spacing:2px">TAWASOL © 2026</div>';
-const routes={home,profile,friends,messages,notifications,groups,watch,search,admin,settings};
+$('#right').innerHTML='<div class="card"><div class="eyebrow">INNER CIRCLE</div><h2 style="margin-top:12px">مساحتك الأقرب.</h2><div class="small-rule"></div><p class="tagline">ما تشاركه هنا، يبقى بينك<br>وبين أصدقائك.</p><div class="row between"><span class="muted">الأصدقاء</span><strong style="font-size:30px;color:var(--blue)">'+db.users.filter(mutual).length+'</strong></div><button class="quiet" style="width:100%;margin-top:12px" onclick="go(\'search\')">'+icon('search')+'ابحث عن صديق</button></div><div class="card"><h2>مجتمعاتك</h2>'+(groupsView||'<p class="muted">لكل شغف مساحة.</p>')+'<button class="follow" onclick="go(\'groups\')">اكتشف المجتمعات ←</button></div><div class="card" style="background:var(--plum)"><div class="round-icon">'+icon('play')+'</div><h2 style="margin:15px 0">نفس اللحظة.<br>مع أصدقائك.</h2><button class="primary" onclick="go(\'watch\')">أنشئ غرفة</button></div><div class="footer" style="direction:ltr;text-align:center;letter-spacing:2px">TAWASOL © 2026<br><button style="color:var(--muted);font-size:11px;padding:2px" onclick="go('about')">حول تواصل</button></div>';
+const routes={home,profile,friends,messages,notifications,groups,watch,search,admin,settings,about};
 $('#main').innerHTML=(routes[page]||home)();
 $('#main').querySelectorAll('[onclick]').forEach(b=>{const h=b.getAttribute('onclick');if(h.includes('db.notifications.filter'))b.setAttribute('onclick',"act('readNotifications').catch(()=>{})");if(h.includes('removeUser'))b.remove();if(h==='manageUser()')b.textContent='ترقية حساب مسجّل'});
 $('#main').querySelectorAll('[onchange]').forEach(b=>{if(b.getAttribute('onchange').includes('db.settings.registration'))b.setAttribute('onchange',"act('registration',{value:this.checked}).catch(()=>{})")});
@@ -474,6 +474,65 @@ document.querySelector('header .search').onsubmit=async function(e){e.preventDef
 const baseProfile=profile;
 profile=function(){const id=profileId||current,u=lookup(id);if(!u)return '<div class="card empty">الحساب غير متاح.</div>';if(id!==current&&!mutual(u))return heading(u.name)+'<div class="card">'+person(u)+'<p class="muted">المنشورات تظهر بعد تبادل المتابعة.</p><button class="block-action" onclick="blockUser(\''+id+'\')">حظر الحساب</button></div>';let h=baseProfile();if(id!==current)h=h.replace('<h2>المنشورات</h2>','<button class="block-action" onclick="blockUser(\''+id+'\')">حظر الحساب</button><h2>المنشورات</h2>');return h};
 async function blockUser(id){if(!confirm('حظر الحساب وإلغاء الصداقة؟'))return;try{await act('block',{id});discoveries=discoveries.filter(x=>x.id!==id);go('friends')}catch{}}
+function about(){
+  return heading('حول تواصل','من نحن وما هي رؤيتنا')+
+    '<div class="card" style="text-align:center;padding:35px">'+
+      '<div style="margin-bottom:20px">'+
+        '<div class="auth-logo-box" style="margin:0 auto;width:64px;height:64px;border-radius:20px">'+
+          '<svg class="tawasol-logo-svg" viewBox="0 0 64 64" fill="none" style="width:44px;height:44px">'+
+            '<path class="a-b" pathLength="1" d="M32 6A24 24 0 1 1 20.5 51L9 56L13.5 44.8A24 24 0 0 1 32 6Z"/>'+
+            '<path class="a-l" pathLength="1" d="M23 27L41 33"/>'+
+            '<circle class="a-1" cx="23" cy="27" r="5.5"/><circle class="a-2" cx="41" cy="33" r="5.5"/>'+
+            '<circle class="a-t" r="2.2"/>'+
+          '</svg>'+
+        '</div>'+
+      '</div>'+
+      '<h1 style="font-size:28px;margin-bottom:6px">تواصل · TAWASOL</h1>'+
+      '<p class="muted" style="max-width:420px;margin:0 auto;line-height:2">'+
+        'منصة تواصل اجتماعي عربية خاصة، صُنعت لتكون مساحة آمنة تجمع الأصدقاء الحقيقيين.'+
+        ' <br>هنا كل شيء يبدأ بطلب صداقة — لأن العلاقات الحقيقية تُبنى على القبول المتبادل.'+
+      '</p>'+
+    '</div>'+
+    '<div class="card">'+
+      '<h2>✦ مؤسس المنصة</h2>'+
+      '<div class="row" style="gap:16px;padding:12px 0">'+
+        '<div class="avatar" style="width:60px;height:60px;font-size:22px;border-radius:50%;background:var(--plum)">Q</div>'+
+        '<div>'+
+          '<h2 style="margin:0">قصي (Qusay)</h2>'+
+          '<p class="muted" style="margin:4px 0">مطوّر ومصمم منصة تواصل</p>'+
+          '<span class="pill" style="font-size:11px">qsyashrfalryaty@gmail.com</span>'+
+        '</div>'+
+      '</div>'+
+      '<div class="divider"></div>'+
+      '<p style="line-height:2.2;font-size:14px">'+
+        'أنا قصي، مبرمج شاب شغوف بالتكنولوجيا والتصميم. '+
+        'بنيت تواصل من الصفر كمنصة اجتماعية عربية تركّز على الخصوصية والعلاقات الحقيقية. '+
+        'رؤيتي أن تكون كل صداقة على تواصل حقيقية — لهذا أضفت نظام طلبات المتابعة بالقبول والرفض. '+
+        'أحب البرمجة والتصميم وبناء المنتجات التي تخدم المستخدم العربي.'+
+      '</p>'+
+    '</div>'+
+    '<div class="card">'+
+      '<h2>⚡ مميزات المنصة</h2>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">'+
+        '<div class="stat" style="background:var(--soft);border-radius:14px;padding:16px;text-align:center">'+
+          '<span style="font-size:24px">🔒</span><br><b>صداقة بالقبول</b><br><span class="muted" style="font-size:12px">لا متابعة بدون موافقة</span>'+
+        '</div>'+
+        '<div class="stat" style="background:var(--soft);border-radius:14px;padding:16px;text-align:center">'+
+          '<span style="font-size:24px">💬</span><br><b>مراسلة آمنة</b><br><span class="muted" style="font-size:12px">بين الأصدقاء فقط</span>'+
+        '</div>'+
+        '<div class="stat" style="background:var(--soft);border-radius:14px;padding:16px;text-align:center">'+
+          '<span style="font-size:24px">🎙</span><br><b>رسائل صوتية</b><br><span class="muted" style="font-size:12px">سجّل وأرسل بلمسة</span>'+
+        '</div>'+
+        '<div class="stat" style="background:var(--soft);border-radius:14px;padding:16px;text-align:center">'+
+          '<span style="font-size:24px">🌙</span><br><b>وضع ليلي</b><br><span class="muted" style="font-size:12px">تصميم مريح للعينين</span>'+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="card" style="text-align:center;background:var(--plum)">'+
+      '<p class="muted">صُنع بكل ❤️ لنجتمع</p>'+
+      '<p style="font-size:12px;color:var(--muted);direction:ltr">TAWASOL © 2026 · Built by Qusay</p>'+
+    '</div>';
+}
 function settings(){return heading('على مزاجك.')+'<div class="card"><h2>الحساب والمظهر</h2><p class="muted">'+esc(me().email)+'</p><div class="row" style="flex-wrap:wrap"><button class="quiet" onclick="editProfile()">'+icon('user')+'تعديل الملف</button><button class="quiet" onclick="theme()">'+icon('sun')+'تبديل المظهر</button><button class="quiet" onclick="exportData()">تنزيل بياناتي</button></div></div><div class="card"><h2>الحسابات المحظورة</h2>'+((me().blocked||[]).length?(me().blocked||[]).map(id=>'<div class="row between person"><span class="muted">حساب محظور · '+esc(id.slice(0,6))+'</span><button onclick="act(\'block\',{id:\''+id+'\'}).catch(()=>{})">إلغاء الحظر</button></div>').join(''):'<p class="muted">لا توجد حسابات محظورة.</p>')+'</div>'}
 function getNewAuthHTML(mode){
 return '<main class="stage" id="stage"><div class="bg" aria-hidden="true"></div><section class="scene" aria-hidden="true"><div class="layer" style="--d:-8"><svg class="orbits" viewBox="0 0 800 800"><circle class="ring" cx="400" cy="400" r="120"/><circle class="ring" cx="400" cy="400" r="200"/><circle class="ring" cx="400" cy="400" r="280"/><g class="orb" style="--t:38s"><polygon class="dash" points="520,400 340,504 340,296"/><circle class="nd" cx="520" cy="400" r="7"/><circle class="nd" cx="340" cy="504" r="5"/><circle class="nd c" cx="340" cy="296" r="6"/></g><g class="orb r" style="--t:62s"><polygon class="dash c" points="600,400 400,600 200,400 400,200"/><circle class="nd" cx="600" cy="400" r="6"/><circle class="nd c" cx="400" cy="600" r="8"/><circle class="nd" cx="200" cy="400" r="5"/><circle class="nd c" cx="400" cy="200" r="6"/></g><g class="orb" style="--t:90s"><polygon class="dash" points="680,400 260,642 260,158"/><circle class="nd c" cx="680" cy="400" r="7"/><circle class="nd" cx="260" cy="642" r="9"/><circle class="nd" cx="260" cy="158" r="6"/></g><circle class="core" cx="400" cy="400" r="16"/></svg></div><div class="layer" style="--d:18"><div class="chat" style="inset-block-start:14%;inset-inline-start:6%;--f:7s"><i></i><div><b style="--w:84px"></b><b style="--w:52px"></b></div></div><div class="chat c" style="inset-block-start:30%;inset-inline-end:2%;--f:9s;--fd:-2s"><i></i><div><b style="--w:64px"></b><span class="dots"><s></s><s></s><s></s></span></div></div><div class="chat" style="inset-block-end:24%;inset-inline-start:2%;--f:8s;--fd:-4s"><i></i><div><b style="--w:96px"></b><b style="--w:40px"></b></div></div><div class="chat c" style="inset-block-end:10%;inset-inline-end:12%;--f:10s;--fd:-1s"><i></i><div><b style="--w:70px"></b></div></div></div><p class="tag">مساحة هادئة تجمعك بأصدقائك.</p></section><section class="cardwrap"><div class="card" id="authCard" data-mode="'+mode+'"><div class="auth-brand-head"><div class="auth-logo-box"><svg class="tawasol-logo-svg" viewBox="0 0 64 64" fill="none"><path class="a-b" pathLength="1" d="M32 6A24 24 0 1 1 20.5 51L9 56L13.5 44.8A24 24 0 0 1 32 6Z"/><path class="a-l" pathLength="1" d="M23 27L41 33"/><circle class="a-1" cx="23" cy="27" r="5.5"/><circle class="a-2" cx="41" cy="33" r="5.5"/><circle class="a-t" r="2.2"/></svg></div><div class="brand-text" style="align-items:center"><span class="brand-title" style="font-size:24px">تواصل</span><span class="brand-sub" style="letter-spacing:3px">TAWASOL</span></div></div><div class="seg" id="authSeg" data-mode="'+mode+'" role="tablist"><span class="pill"></span><button type="button" role="tab" id="tab-login" aria-selected="'+(mode==='login')+'" onclick="switchAuthTab(\'login\')">تسجيل الدخول</button><button type="button" role="tab" id="tab-signup" aria-selected="'+(mode==='signup')+'" onclick="switchAuthTab(\'signup\')">حساب جديد</button></div><h1 id="ttl">'+(mode==='signup'?'لنبدأ حكايتك':'أهلاً بعودتك')+'</h1><p class="sub" id="sub">'+(mode==='signup'?'أنشئ حسابك وانضم إلى دائرتك.':'سجّل دخولك لتكمل محادثاتك.')+'</p><form id="newAuthForm" novalidate onsubmit="handleAuthSubmit(event)"><div class="alert" id="authAlert" role="alert"></div><div class="fold" id="nameFold" aria-hidden="'+(mode!=='signup')+'"><div><div class="field"><label for="authName">الاسم</label><div class="box" id="bx-name"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg><input id="authName" name="name" type="text" autocomplete="name" placeholder="اسمك الكامل" '+(mode==='signup'?'required':'disabled')+'></div><p class="msg" id="er-name"></p></div></div></div><div class="field"><label for="authEmail">البريد الإلكتروني</label><div class="box" id="bx-email"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg><input id="authEmail" name="email" type="email" inputmode="email" autocomplete="username" placeholder="name@example.com" required dir="ltr"></div><p class="msg" id="er-email"></p></div><div class="field"><label for="authPass">كلمة المرور</label><div class="box" id="bx-pass"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><input id="authPass" name="password" type="password" autocomplete="'+(mode==='signup'?'new-password':'current-password')+'" placeholder="'+(mode==='signup'?'12 حرفًا على الأقل':'••••••••')+'" required><button class="eye" id="authEye" type="button" aria-label="إظهار كلمة المرور" onclick="togglePassVisibility()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path id="eyep" d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path id="eyes" d="M4 4l16 16" style="display:none"/></svg></button></div><p class="msg" id="er-pass"></p></div><button class="go" id="authGo" type="submit"><span class="spin" aria-hidden="true"></span><span id="goTxt">'+(mode==='signup'?'إنشاء الحساب':'تسجيل الدخول')+'</span></button></form></div></section></main>';

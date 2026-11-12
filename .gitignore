@@ -1,0 +1,10 @@
+data/
+.env
+**/node_modules/
+node_modules/
+*.sqlite*
+cloudflared.exe
+check_db.mjs
+.preview-data/
+
+

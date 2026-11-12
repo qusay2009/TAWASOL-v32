@@ -214,6 +214,21 @@ body:has(#authPage) header{display:none}
   .chat-bottom{padding:10px!important}
 }
 body:has(#authPage) .mobile-bottom-nav,body:has(#authPage) .mobile-fab{display:none!important}
+
+/* Modern Voice Message Player & Waveform */
+.bubble audio{max-width:260px;width:100%;height:38px;border-radius:20px;outline:none}
+.voice-bubble{display:flex;align-items:center;gap:10px;padding:4px 0}
+.voice-wave{display:flex;align-items:center;gap:3px;height:24px;padding:0 4px}
+.voice-wave span{display:inline-block;width:3px;border-radius:3px;background:currentColor;opacity:.7}
+.voice-wave span:nth-child(1){height:8px}.voice-wave span:nth-child(2){height:18px}.voice-wave span:nth-child(3){height:12px}.voice-wave span:nth-child(4){height:22px}.voice-wave span:nth-child(5){height:14px}.voice-wave span:nth-child(6){height:10px}
+.bubble-wrap.mine .bubble .voice-wave span{background:#302034}
+.voice-tray{background:var(--card);border:1.5px solid var(--line);box-shadow:0 8px 24px -6px rgba(0,0,0,.35);padding:12px 18px;border-radius:20px;margin-bottom:12px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;animation:bubbleIn .25s ease-out}
+.rec-pulse-ring{position:relative;width:14px;height:14px;display:grid;place-items:center}
+.rec-pulse-ring::before{content:"";position:absolute;inset:-4px;border-radius:50%;background:var(--coral);opacity:.4;animation:pulse 1s infinite}
+.rec-pulse-ring .rec-dot{width:10px;height:10px;border-radius:50%;background:var(--coral);position:relative;z-index:1}
+.speed-btn{background:rgba(255,255,255,.1);border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:11px;font-weight:700;color:inherit;cursor:pointer;transition:transform .15s}
+.speed-btn:active{transform:scale(.92)}
+
 </style></head><body>
 <main class="loader" id="loader" role="status" aria-live="polite" aria-busy="true">
 <canvas id="cv" aria-hidden="true"></canvas>
@@ -580,7 +595,7 @@ const el=$('#chatScroll');if(!el)return;const ms=db.messages.filter(m=>m.from===
 const signature=JSON.stringify(ms.map(m=>[m.id,m.readAt,m.deliveredAt]));if(!force&&signature===lastMessages)return;const near=el.scrollHeight-el.scrollTop-el.clientHeight<100,oldIds=new Set([...el.querySelectorAll('[data-msg]')].map(e=>e.dataset.msg));
 if(force)el.innerHTML='';
 for(const m of ms){const old=el.querySelector('[data-msg="'+m.id+'"]');const meta=new Date(m.time||Date.now()).toLocaleTimeString('ar-JO',{hour:'2-digit',minute:'2-digit'})+(m.from===current?' · '+(m.readAt?'تمت القراءة':m.deliveredAt?'تم التسليم':'أُرسلت'):'');if(old){old.querySelector('.bubble-meta').textContent=meta;continue}
-const d=document.createElement('div');d.className='bubble-wrap'+(m.from===current?' mine':'');d.dataset.msg=m.id;d.innerHTML='<div class="bubble">'+(m.audio?'<audio controls preload="none" src="/api/media/'+esc(m.audio.id)+'"></audio><button style="font-size:10px" onclick="cycleSpeed(this)">1×</button>':esc(m.text))+'</div><div class="bubble-meta">'+esc(meta)+'</div>';el.append(d)}
+const d=document.createElement('div');d.className='bubble-wrap'+(m.from===current?' mine':'');d.dataset.msg=m.id;d.innerHTML='<div class="bubble">'+(m.audio?'<div class="voice-bubble"><span class="voice-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></span><audio controls preload="metadata" src="/api/media/'+esc(m.audio.id)+'"></audio><button class="speed-btn" onclick="cycleSpeed(this)" title="سرعة التشغيل">1×</button></div>':esc(m.text))+'</div><div class="bubble-meta">'+esc(meta)+'</div>';el.append(d)}
 if(force||near)el.scrollTop=el.scrollHeight;lastMessages=signature;
 }
 function cycleSpeed(b){const a=b.parentElement.querySelector('audio');a.playbackRate=a.playbackRate===1?1.5:a.playbackRate===1.5?2:1;b.textContent=a.playbackRate+'×'}
@@ -600,7 +615,7 @@ async function startVoice(){if(recording||voiceDraft)return;const recipient=chat
 if(!navigator.mediaDevices?.getUserMedia||!window.AudioContext)return toast('التسجيل يحتاج HTTPS أو localhost ومتصفحًا يدعم الميكروفون');
 let stream,ctx;
 try{stream=await navigator.mediaDevices.getUserMedia({audio:true});if(page!=='messages'||chatId!==recipient){stream.getTracks().forEach(t=>t.stop());return}ctx=new AudioContext();await ctx.resume();const source=ctx.createMediaStreamSource(stream),processor=ctx.createScriptProcessor(4096,1,1),silent=ctx.createGain();silent.gain.value=0;const parts=[];let total=0;recording={stream,ctx,source,processor,silent,parts,total:0,started:Date.now(),recipient};processor.onaudioprocess=e=>{if(!recording)return;const a=new Float32Array(e.inputBuffer.getChannelData(0));parts.push(a);recording.total+=a.length;if(recording.total/ctx.sampleRate>=120)stopVoice()};
-source.connect(processor);processor.connect(silent);silent.connect(ctx.destination);const tray=$('#voiceTray');tray.hidden=false;tray.className='voice-tray';tray.innerHTML='<span class="rec-dot"></span><b id="recTimer">00:00</b><span class="muted grow">جارٍ التسجيل</span><button type="button" onclick="stopVoice()">إيقاف</button><button type="button" onclick="cancelVoice()">إلغاء</button>';recording.timer=setInterval(()=>{const n=Math.floor((Date.now()-recording.started)/1000);const t=$('#recTimer');if(t)t.textContent=String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')},500);
+source.connect(processor);processor.connect(silent);silent.connect(ctx.destination);const tray=$('#voiceTray');tray.hidden=false;tray.className='voice-tray';tray.innerHTML='<span class="rec-pulse-ring"><span class="rec-dot"></span></span><b id="recTimer" style="color:var(--coral);font-size:14px;letter-spacing:1px">00:00</b><span class="voice-wave" style="color:var(--coral)"><span style="animation:pulse .6s infinite"></span><span style="animation:pulse .8s .1s infinite"></span><span style="animation:pulse .7s .2s infinite"></span><span style="animation:pulse .9s .3s infinite"></span></span><span class="muted grow" style="font-size:12px">جارٍ التسجيل...</span><button type="button" class="primary" style="padding:6px 14px;font-size:12px;border-radius:10px" onclick="stopVoice()">تم التسجيل</button><button type="button" class="quiet" style="padding:6px 12px;font-size:12px;border-radius:10px;border:1px solid var(--line)" onclick="cancelVoice()">إلغاء</button>';recording.timer=setInterval(()=>{const n=Math.floor((Date.now()-recording.started)/1000);const t=$('#recTimer');if(t)t.textContent=String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')},500);
 }catch(e){stream?.getTracks().forEach(t=>t.stop());ctx?.close();toast(e.name==='NotAllowedError'?'اسمح باستخدام الميكروفون لبدء التسجيل':'تعذر بدء التسجيل، تحقق من الميكروفون')}}
 async function stopVoice(){if(!recording)return;const r=recording;recording=null;clearInterval(r.timer);r.processor.onaudioprocess=null;r.source.disconnect();r.processor.disconnect();r.silent.disconnect();r.stream.getTracks().forEach(t=>t.stop());const rate=r.ctx.sampleRate;await r.ctx.close();if(!r.total)return cancelVoice();const input=new Float32Array(r.total);let off=0;for(const p of r.parts){input.set(p,off);off+=p.length}const targetRate=22050,out=new Float32Array(Math.min(120*targetRate,Math.floor(input.length*targetRate/rate)));for(let i=0;i<out.length;i++){const pos=i*rate/targetRate,j=Math.floor(pos),f=pos-j;out[i]=(input[j]||0)*(1-f)+(input[j+1]||0)*f}
 voiceDraft={blob:encodeWav(out,targetRate),to:r.recipient};voiceURL=URL.createObjectURL(voiceDraft.blob);const tray=$('#voiceTray');if(!tray)return cancelVoice();tray.innerHTML='<audio controls src="'+voiceURL+'"></audio><button class="primary" onclick="sendVoice()">إرسال</button><button onclick="cancelVoice()">إلغاء</button>'}

@@ -687,7 +687,7 @@ http.createServer(async (req, res) => {
       const duration = wav(bytes, body.kind === 'voice' ? 120 : 30);
       const mid = randomUUID();
       await sql`INSERT INTO media(id,owner,kind,mime,bytes,duration)
-        VALUES(${mid},${u.id},${body.kind},'audio/wav',${sql.typed.bytea(bytes)},${duration})`;
+        VALUES(${mid},${u.id},${body.kind},'audio/wav',${bytes},${duration})`;
       return reply(200, { id: mid, duration });
     }
 

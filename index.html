@@ -205,47 +205,51 @@ body:has(#authPage) header{display:none}
   .search{max-width:280px!important}
 }
 
-/* Dedicated Mobile App Design System (< 768px) */
+/* Dedicated Mobile App Design System (< 768px) - Tailored for physical phone (77.9mm x 164.4mm) */
 @media (max-width:768px){
   html,body{width:100%!important;max-width:100vw!important;overflow-x:hidden!important;touch-action:manipulation!important;-webkit-text-size-adjust:100%!important;text-size-adjust:100%!important}
-  body{padding-bottom:calc(68px + env(safe-area-inset-bottom,0px))!important}
+  body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!important}
   input,textarea,select{font-size:16px!important}
-  header{height:52px!important;padding:0 12px!important;position:sticky!important;top:0!important;z-index:990!important;background:rgba(23,15,27,0.95)!important;backdrop-filter:blur(25px)!important;-webkit-backdrop-filter:blur(25px)!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important}
+  header{height:52px!important;padding:0 10px!important;position:sticky!important;top:0!important;z-index:990!important;background:rgba(23,15,27,0.96)!important;backdrop-filter:blur(25px)!important;-webkit-backdrop-filter:blur(25px)!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:6px!important}
   body:not(.dark) header{background:rgba(246,243,236,0.96)!important}
   .search{display:none!important}
-  .head-actions{margin-right:auto!important;gap:5px!important;display:flex!important;align-items:center!important}
+  .head-actions{margin-right:auto!important;gap:4px!important;display:flex!important;align-items:center!important}
+  .head-actions button[onclick*="messages"],#headMsgBtn{display:none!important}
+  .head-actions button{position:relative!important;width:36px!important;height:36px!important;min-width:36px!important;padding:0!important;border-radius:50%!important;display:grid!important;place-items:center!important}
   .head-name{display:none!important}
   .pwa-head-btn span,.admin-head-btn span{display:none!important}
-  .pwa-head-btn{padding:6px 9px!important;border-radius:10px!important}
-  .admin-head-btn{padding:6px 9px!important;border-radius:10px!important}
+  .pwa-head-btn{width:36px!important;height:36px!important;padding:0!important;border-radius:50%!important}
+  .admin-head-btn{width:36px!important;height:36px!important;padding:0!important;border-radius:50%!important}
   .brand-logo-icon{width:34px!important;height:34px!important;border-radius:10px!important}
-  .brand-logo-icon svg{width:24px!important;height:24px!important}
+  .brand-logo-icon svg{width:22px!important;height:22px!important}
   .brand-title{font-size:16px!important;font-weight:800!important}
   .brand-sub{display:none!important}
-  .layout{display:flex!important;flex-direction:column!important;width:100%!important;max-width:100vw!important;margin:0!important;padding:8px 10px calc(72px + env(safe-area-inset-bottom,0px))!important;box-sizing:border-box!important;overflow-x:hidden!important}
+  .layout{display:flex!important;flex-direction:column!important;width:100%!important;max-width:100vw!important;margin:0!important;padding:8px 8px calc(72px + env(safe-area-inset-bottom,0px))!important;box-sizing:border-box!important;overflow-x:hidden!important}
   main#main{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
   .side,.right{display:none!important}
   .side.open{display:block!important;position:fixed!important;right:0!important;top:52px!important;width:min(82vw,300px)!important;height:calc(100vh - 52px)!important;background:rgba(28,17,32,0.97)!important;backdrop-filter:blur(25px)!important;-webkit-backdrop-filter:blur(25px)!important;z-index:1001!important;padding:20px 16px!important;box-shadow:-10px 0 40px rgba(0,0,0,0.6)!important;overflow-y:auto!important}
-  .card,article.card{width:100%!important;max-width:100%!important;box-sizing:border-box!important;margin-left:0!important;margin-right:0!important;border-radius:18px!important;padding:16px!important;margin-bottom:12px!important;overflow:hidden!important}
-  .quick-circles-card{width:100%!important;max-width:100%!important;padding:12px 6px!important;box-sizing:border-box!important;overflow:hidden!important}
-  .quick-circles-row{display:flex!important;gap:12px!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch!important;scrollbar-width:none!important;width:100%!important;box-sizing:border-box!important}
+  .card,article.card{width:100%!important;max-width:100%!important;box-sizing:border-box!important;margin-left:0!important;margin-right:0!important;border-radius:16px!important;padding:14px 12px!important;margin-bottom:10px!important;overflow:hidden!important}
+  .quick-circles-card{width:100%!important;max-width:100%!important;padding:10px 4px!important;box-sizing:border-box!important;overflow:hidden!important}
+  .quick-circles-row{display:flex!important;gap:10px!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch!important;scrollbar-width:none!important;width:100%!important;box-sizing:border-box!important}
   .quick-circles-row::-webkit-scrollbar{display:none!important}
-  .editorial{width:100%!important;max-width:100%!important;height:auto!important;min-height:120px!important;padding:16px!important;border-radius:18px!important;box-sizing:border-box!important}
-  .editorial h2{font-size:18px!important;margin-top:6px!important}
-  .editorial .orbital{width:65px!important;height:65px!important;border-width:12px!important;left:10px!important;top:15px!important}
-  .welcome h1{font-size:19px!important}
-  .post-img{width:100%!important;max-width:100%!important;height:auto!important;max-height:340px!important;object-fit:cover!important;border-radius:14px!important}
-  .stats{grid-template-columns:repeat(2,1fr)!important;gap:10px!important;width:100%!important}
+  .editorial{width:100%!important;max-width:100%!important;height:auto!important;min-height:105px!important;padding:14px!important;border-radius:16px!important;box-sizing:border-box!important}
+  .editorial h2{font-size:17px!important;margin-top:6px!important}
+  .editorial .orbital{width:56px!important;height:56px!important;border-width:10px!important;left:8px!important;top:12px!important}
+  .welcome h1{font-size:18px!important}
+  .post-img{width:100%!important;max-width:100%!important;height:auto!important;max-height:320px!important;object-fit:cover!important;border-radius:12px!important}
+  .stats{grid-template-columns:repeat(2,1fr)!important;gap:8px!important;width:100%!important}
   .table-wrap{width:100%!important;max-width:100%!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch!important;box-sizing:border-box!important}
-  table{min-width:520px!important}
-  dialog{width:92vw!important;max-width:92vw!important;margin:auto!important;padding:20px 16px!important;border-radius:20px!important;box-sizing:border-box!important}
+  table{min-width:480px!important}
+  dialog{width:94vw!important;max-width:94vw!important;margin:auto!important;padding:16px 14px!important;border-radius:18px!important;box-sizing:border-box!important}
+  .post-actions{display:flex!important;justify-content:space-between!important;gap:6px!important}
+  .post-actions button{flex:1!important;padding:7px 4px!important;font-size:11px!important;justify-content:center!important}
   
-  /* Mobile Bottom Navigation Bar */
-  .mobile-bottom-nav{display:flex!important;position:fixed;bottom:0;left:0;right:0;width:100vw!important;height:calc(58px + env(safe-area-inset-bottom,0px));background:rgba(24,15,27,0.96);backdrop-filter:blur(25px);-webkit-backdrop-filter:blur(25px);border-top:1px solid var(--line);z-index:999;align-items:flex-start;justify-content:space-around;padding:6px 2px env(safe-area-inset-bottom,0px);box-shadow:0 -4px 25px rgba(0,0,0,0.35);box-sizing:border-box!important}
+  /* Mobile Bottom Navigation Bar (App style: Home, Messages, Rooms, Friends, Profile) */
+  .mobile-bottom-nav{display:flex!important;position:fixed;bottom:0;left:0;right:0;width:100vw!important;height:calc(56px + env(safe-area-inset-bottom,0px));background:rgba(24,15,27,0.96);backdrop-filter:blur(25px);-webkit-backdrop-filter:blur(25px);border-top:1px solid var(--line);z-index:999;align-items:center;justify-content:space-around;padding:4px 2px env(safe-area-inset-bottom,0px);box-shadow:0 -4px 25px rgba(0,0,0,0.35);box-sizing:border-box!important}
   body:not(.dark) .mobile-bottom-nav{background:rgba(255,253,248,0.97)}
-  .mobile-bottom-nav button{background:transparent!important;border:0!important;color:var(--muted)!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:2px!important;font-size:10px!important;font-family:inherit!important;padding:2px 4px!important;position:relative!important;flex:1!important;min-width:0!important;cursor:pointer;border-radius:12px;transition:all .2s cubic-bezier(0.3,1.3,0.5,1)}
+  .mobile-bottom-nav button{background:transparent!important;border:0!important;color:var(--muted)!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:2px!important;font-size:10px!important;font-family:inherit!important;padding:3px 2px!important;position:relative!important;flex:1!important;min-width:0!important;cursor:pointer;border-radius:10px;transition:all .2s cubic-bezier(0.3,1.3,0.5,1)}
   .mobile-bottom-nav button.active{color:var(--blue)!important;font-weight:700}
-  .mobile-bottom-nav button.active svg{transform:scale(1.15);stroke:var(--blue);filter:drop-shadow(0 2px 6px rgba(211,239,138,0.45))}
+  .mobile-bottom-nav button.active svg{transform:scale(1.12);stroke:var(--blue);filter:drop-shadow(0 2px 6px rgba(211,239,138,0.45))}
   .mobile-bottom-nav button svg{width:22px;height:22px;transition:transform .2s}
   .mobile-bottom-nav .nav-badge{position:absolute;top:2px;right:22%;background:var(--coral);color:#24142a;font-size:10px;font-weight:800;border-radius:10px;min-width:18px;height:18px;line-height:18px;text-align:center;padding:0 4px;animation:pulse 2s infinite}
   
@@ -258,25 +262,26 @@ body:has(#authPage) header{display:none}
   .inbox.has-chat{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;z-index:1000!important;border-radius:0!important;border:0!important;background:var(--bg)!important;display:flex!important;flex-direction:column!important;box-sizing:border-box!important}
   .inbox.has-chat .chat-list{display:none!important}
   .inbox.has-chat .conversation{display:flex!important;flex-direction:column!important;height:100dvh!important;width:100vw!important;flex:1!important}
-  .inbox.has-chat .chat-top{height:54px!important;padding:0 12px!important;position:sticky!important;top:0!important;z-index:20!important;border-radius:0!important;background:rgba(28,17,32,0.96)!important;backdrop-filter:blur(20px)!important;border-bottom:1px solid var(--line)!important;display:flex!important;align-items:center!important;gap:10px!important}
+  .inbox.has-chat .chat-top{height:52px!important;padding:0 10px!important;position:sticky!important;top:0!important;z-index:20!important;border-radius:0!important;background:rgba(28,17,32,0.96)!important;backdrop-filter:blur(20px)!important;border-bottom:1px solid var(--line)!important;display:flex!important;align-items:center!important;gap:8px!important}
   body:not(.dark) .inbox.has-chat .chat-top{background:rgba(255,253,248,0.97)!important}
-  .inbox.has-chat .chat-scroll{flex:1!important;padding:12px 10px!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;display:flex!important;flex-direction:column!important;gap:10px!important}
-  .inbox.has-chat .chat-bottom{padding:8px 10px max(10px,env(safe-area-inset-bottom,10px))!important;background:rgba(28,17,32,0.96)!important;border-top:1px solid var(--line)!important;backdrop-filter:blur(20px)!important;width:100vw!important;box-sizing:border-box!important}
+  .inbox.has-chat .chat-scroll{flex:1!important;padding:10px 8px!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;display:flex!important;flex-direction:column!important;gap:8px!important}
+  .inbox.has-chat .chat-bottom{padding:6px 8px max(8px,env(safe-area-inset-bottom,8px))!important;background:rgba(28,17,32,0.96)!important;border-top:1px solid var(--line)!important;backdrop-filter:blur(20px)!important;width:100vw!important;box-sizing:border-box!important}
   body:not(.dark) .inbox.has-chat .chat-bottom{background:rgba(255,253,248,0.97)!important}
-  .message-form{display:flex!important;flex-direction:row!important;align-items:center!important;gap:8px!important;flex-wrap:nowrap!important;width:100%!important}
-  .message-form textarea{flex:1!important;min-width:0!important;font-size:16px!important;min-height:40px!important;max-height:80px!important;border-radius:20px!important;padding:9px 14px!important;line-height:1.4!important;order:2!important;margin:0!important}
-  .message-form .voice-mic-btn{order:1!important;width:40px!important;height:40px!important;min-width:40px!important;border-radius:50%!important;padding:0!important;display:grid!important;place-items:center!important;flex:0 0 40px!important}
+  .message-form{display:flex!important;flex-direction:row!important;align-items:center!important;gap:6px!important;flex-wrap:nowrap!important;width:100%!important}
+  .message-form textarea{flex:1!important;min-width:0!important;font-size:16px!important;min-height:38px!important;max-height:80px!important;border-radius:19px!important;padding:8px 12px!important;line-height:1.35!important;order:2!important;margin:0!important}
+  .message-form .voice-mic-btn{order:1!important;width:38px!important;height:38px!important;min-width:38px!important;border-radius:50%!important;padding:0!important;display:grid!important;place-items:center!important;flex:0 0 38px!important}
   .message-form .voice-mic-btn .mic-text{display:none!important}
-  .message-form .send-round{order:3!important;width:40px!important;height:40px!important;min-width:40px!important;border-radius:50%!important;padding:0!important;display:grid!important;place-items:center!important;flex:0 0 40px!important}
-  .voice-tray{padding:10px 14px!important;border-radius:16px!important;gap:10px!important}
+  .message-form .send-round{order:3!important;width:38px!important;height:38px!important;min-width:38px!important;border-radius:50%!important;padding:0!important;display:grid!important;place-items:center!important;flex:0 0 38px!important}
+  .voice-tray{padding:8px 12px!important;border-radius:14px!important;gap:8px!important}
   
   /* Auth Page Mobile Sizing */
   #authPage{width:100vw!important;max-width:100vw!important;overflow-x:hidden!important}
-  #authPage .stage{grid-template-columns:1fr!important;padding:1rem!important;gap:1rem!important;min-height:100dvh!important;width:100%!important;box-sizing:border-box!important}
+  #authPage .stage{grid-template-columns:1fr!important;padding:1rem .75rem!important;gap:1rem!important;min-height:100dvh!important;width:100%!important;box-sizing:border-box!important}
   #authPage .cardwrap{width:100%!important;max-width:100%!important;display:flex!important;justify-content:center!important}
-  #authPage .card{width:100%!important;max-width:min(100%,420px)!important;padding:1.5rem 1.25rem!important;box-sizing:border-box!important;border-radius:22px!important}
+  #authPage .card{width:100%!important;max-width:min(100%,400px)!important;padding:1.4rem 1.1rem!important;box-sizing:border-box!important;border-radius:20px!important}
   #authPage .scene{display:none!important}
 }
+.head-badge{position:absolute;top:-2px;right:-2px;background:var(--coral);color:#24142a;font-size:9px;font-weight:900;border-radius:10px;min-width:16px;height:16px;line-height:16px;text-align:center;padding:0 3px;animation:pulse 2s infinite}
 body:has(#authPage) .mobile-bottom-nav,body:has(#authPage) .mobile-fab{display:none!important}
 
 /* Modern Voice Message Player & Waveform */
@@ -641,6 +646,10 @@ if(ab){
 $('#mini').innerHTML='<div class="row side-profile">'+avatar(me())+'<div><b>'+esc(me().name)+'</b> '+(isAdmin?'<span class="pill" style="color:var(--coral);font-size:10px">مالك 👑</span>':'')+'<div class="muted">'+db.users.filter(mutual).length+' أصدقاء</div></div></div>';
 const unreadMsgs=db.messages.filter(m=>m.to===current&&!m.readAt).length;
 const unreadNotifs=db.notifications.filter(n=>n.to===current&&!n.read).length;
+const nb=$('#headNotifBtn');
+if(nb){
+  nb.innerHTML=icon('bell')+(unreadNotifs>0?'<span class="head-badge">'+unreadNotifs+'</span>':'');
+}
 const nav=[['home','home','الرئيسية',0],['messages','chat','الرسائل',unreadMsgs],['friends','users','الأصدقاء',0],['search','search','البحث',0],['notifications','bell','الإشعارات',unreadNotifs],['groups','grid','المجتمعات',0],['watch','play','غرفة المشاهدة',0],['profile','user','الملف الشخصي',0],['about','heart','حول تواصل',0]];
 if(isAdmin)nav.push(['admin','shield','لوحة الإدارة 🛡️',0]);
 if(page==='admin'&&!isAdmin)page='home';
@@ -648,7 +657,7 @@ $('#nav').innerHTML=nav.map(([p,i,t,c])=>'<button class="'+(page===p?'active':''
 
 let bNav=$('#mobileBottomNav');
 if(!bNav){bNav=document.createElement('nav');bNav.id='mobileBottomNav';bNav.className='mobile-bottom-nav';document.body.append(bNav);}
-const mItems=[['home','home','الرئيسية',0],['messages','chat','الرسائل',unreadMsgs],['notifications','bell','الإشعارات',unreadNotifs],['friends','users','الأصدقاء',0],['profile','user','حسابي',0]];
+const mItems=[['home','home','الرئيسية',0],['messages','chat','الرسائل',unreadMsgs],['watch','play','الغرف',0],['friends','users','الأصدقاء',0],['profile','user','حسابي',0]];
 bNav.innerHTML=mItems.map(([p,i,t,c])=>'<button class="'+(page===p?'active':'')+'" onclick="go(\''+p+'\''+(p==='profile'?',current':'')+')">'+icon(i)+(c>0?'<span class="nav-badge">'+c+'</span>':'')+'<span>'+t+'</span></button>').join('');
 let fab=$('#mobileFab');
 if(!fab){fab=document.createElement('button');fab.id='mobileFab';fab.className='mobile-fab';fab.setAttribute('aria-label','منشور جديد');fab.innerHTML='✦';fab.onclick=()=>{window.scrollTo({top:0,behavior:'smooth'});document.querySelector('.compose textarea')?.focus()};document.body.append(fab);}
@@ -960,13 +969,13 @@ async function startVoice(){if(recording||voiceDraft)return;const recipient=chat
 const AudioCtx=window.AudioContext||window.webkitAudioContext;
 if(!navigator.mediaDevices?.getUserMedia||!AudioCtx)return toast('التسجيل يحتاج HTTPS أو localhost ومتصفحًا يدعم الميكروفون');
 let stream,ctx;
-try{stream=await navigator.mediaDevices.getUserMedia({audio:true});if(page!=='messages'||chatId!==recipient){stream.getTracks().forEach(t=>t.stop());return}ctx=new AudioCtx();if(ctx.state==='suspended')await ctx.resume();const source=ctx.createMediaStreamSource(stream),processor=ctx.createScriptProcessor(4096,1,1),silent=ctx.createGain();silent.gain.value=0;const parts=[];let total=0;recording={stream,ctx,source,processor,silent,parts,total:0,started:Date.now(),recipient};processor.onaudioprocess=e=>{if(!recording)return;const a=new Float32Array(e.inputBuffer.getChannelData(0));parts.push(a);recording.total+=a.length;if(recording.total/ctx.sampleRate>=120)stopVoice()};
-source.connect(processor);processor.connect(silent);silent.connect(ctx.destination);const tray=$('#voiceTray');if(tray){tray.hidden=false;tray.className='voice-tray';tray.innerHTML='<span class="rec-pulse-ring"><span class="rec-dot"></span></span><b id="recTimer" style="color:var(--coral);font-size:14px;letter-spacing:1px">00:00</b><span class="voice-wave" style="color:var(--coral)"><span style="animation:pulse .6s infinite"></span><span style="animation:pulse .8s .1s infinite"></span><span style="animation:pulse .7s .2s infinite"></span><span style="animation:pulse .9s .3s infinite"></span></span><span class="muted grow" style="font-size:12px">جارٍ التسجيل...</span><button type="button" class="primary" style="padding:6px 14px;font-size:12px;border-radius:10px" onclick="stopVoice()">تم التسجيل</button><button type="button" class="quiet" style="padding:6px 12px;font-size:12px;border-radius:10px;border:1px solid var(--line)" onclick="cancelVoice()">إلغاء</button>';}recording.timer=setInterval(()=>{if(!recording)return;const n=Math.floor((Date.now()-recording.started)/1000);const t=$('#recTimer');if(t)t.textContent=String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')},500);
-}catch(e){stream?.getTracks().forEach(t=>t.stop());ctx?.close();toast(e.name==='NotAllowedError'?'اسمح باستخدام الميكروفون لبدء التسجيل':'تعذر بدء التسجيل، تحقق من الميكروفون')}}
-async function stopVoice(){if(!recording)return;const r=recording;recording=null;clearInterval(r.timer);r.processor.onaudioprocess=null;r.source.disconnect();r.processor.disconnect();r.silent.disconnect();r.stream.getTracks().forEach(t=>t.stop());const rate=r.ctx.sampleRate;await r.ctx.close();if(!r.total)return cancelVoice();const input=new Float32Array(r.total);let off=0;for(const p of r.parts){input.set(p,off);off+=p.length}const targetRate=22050,out=new Float32Array(Math.min(120*targetRate,Math.floor(input.length*targetRate/rate)));for(let i=0;i<out.length;i++){const pos=i*rate/targetRate,j=Math.floor(pos),f=pos-j;out[i]=(input[j]||0)*(1-f)+(input[j+1]||0)*f}
-voiceDraft={blob:encodeWav(out,targetRate),to:r.recipient};voiceURL=URL.createObjectURL(voiceDraft.blob);const tray=$('#voiceTray');if(!tray)return cancelVoice();tray.hidden=false;tray.className='voice-tray';tray.innerHTML='<audio controls src="'+voiceURL+'" style="height:36px;flex:1;min-width:160px"></audio><button type="button" class="primary" style="padding:6px 16px;border-radius:10px" onclick="sendVoice()">إرسال</button><button type="button" class="quiet" style="padding:6px 12px;border-radius:10px;border:1px solid var(--line)" onclick="cancelVoice()">إلغاء</button>'}
-function cancelVoice(){if(recording){const r=recording;recording=null;clearInterval(r.timer);r.processor.onaudioprocess=null;r.source.disconnect();r.processor.disconnect();r.stream.getTracks().forEach(t=>t.stop());r.ctx.close()}if(voiceURL)URL.revokeObjectURL(voiceURL);voiceURL=null;voiceDraft=null;const tray=$('#voiceTray');if(tray){tray.hidden=true;tray.innerHTML=''}}
-async function sendVoice(){if(!voiceDraft)return;const b=$('#voiceTray button');if(b){b.disabled=true;b.textContent='جارٍ الإرسال…';}try{const r=await uploadAudio(voiceDraft.blob,'voice'),sent=await request('action',{type:'message',to:voiceDraft.to,audio:r.id});db=sent.db;cancelVoice();paintMessages();toast('تم إرسال الرسالة الصوتية ♫')}catch(e){toast('تعذر إرسال الصوت: '+(e.message||''));if(b){b.disabled=false;b.textContent='إرسال'}}}
+try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});if(page!=='messages'||chatId!==recipient){stream.getTracks().forEach(t=>t.stop());return}ctx=new AudioCtx();if(ctx.state==='suspended')await ctx.resume();const source=ctx.createMediaStreamSource(stream),processor=ctx.createScriptProcessor(4096,1,1);window._voiceAudioProcessor=processor;const parts=[];recording={stream,ctx,source,processor,parts,total:0,started:Date.now(),recipient};processor.onaudioprocess=e=>{if(!recording)return;const a=new Float32Array(e.inputBuffer.getChannelData(0));parts.push(a);recording.total+=a.length;e.outputBuffer.getChannelData(0).fill(0);if(recording.total/ctx.sampleRate>=120)stopVoice()};
+source.connect(processor);processor.connect(ctx.destination);const tray=$('#voiceTray');if(tray){tray.hidden=false;tray.className='voice-tray';tray.innerHTML='<span class="rec-pulse-ring"><span class="rec-dot"></span></span><b id="recTimer" style="color:var(--coral);font-size:14px;letter-spacing:1px">00:00</b><span class="voice-wave" style="color:var(--coral)"><span style="animation:pulse .6s infinite"></span><span style="animation:pulse .8s .1s infinite"></span><span style="animation:pulse .7s .2s infinite"></span><span style="animation:pulse .9s .3s infinite"></span></span><span class="muted grow" style="font-size:12px">جارٍ التسجيل...</span><button type="button" class="primary" style="padding:6px 14px;font-size:12px;border-radius:10px" onclick="stopVoice()">تم التسجيل</button><button type="button" class="quiet" style="padding:6px 12px;font-size:12px;border-radius:10px;border:1px solid var(--line)" onclick="cancelVoice()">إلغاء</button>';}recording.timer=setInterval(()=>{if(!recording)return;const n=Math.floor((Date.now()-recording.started)/1000);const t=$('#recTimer');if(t)t.textContent=String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')},500);
+}catch(e){stream?.getTracks().forEach(t=>t.stop());ctx?.close();window._voiceAudioProcessor=null;toast(e.name==='NotAllowedError'?'اسمح باستخدام الميكروفون لبدء التسجيل':'تعذر بدء التسجيل، تحقق من الميكروفون')}}
+async function stopVoice(){if(!recording)return;const r=recording;recording=null;clearInterval(r.timer);if(r.processor)r.processor.onaudioprocess=null;try{r.source.disconnect()}catch{}try{r.processor.disconnect()}catch{}window._voiceAudioProcessor=null;r.stream.getTracks().forEach(t=>{try{t.stop()}catch{}});const rate=r.ctx.sampleRate;try{await r.ctx.close()}catch{}if(!r.total||r.total<2000){cancelVoice();return toast('التسجيل قصير جدًا، تحدث بوضوح ثم اضغط تم التسجيل')}const input=new Float32Array(r.total);let off=0;for(const p of r.parts){input.set(p,off);off+=p.length}const targetRate=22050,out=new Float32Array(Math.min(120*targetRate,Math.floor(input.length*targetRate/rate)));for(let i=0;i<out.length;i++){const pos=i*rate/targetRate,j=Math.floor(pos),f=pos-j;out[i]=(input[j]||0)*(1-f)+(input[j+1]||0)*f}
+voiceDraft={blob:encodeWav(out,targetRate),to:r.recipient};voiceURL=URL.createObjectURL(voiceDraft.blob);const tray=$('#voiceTray');if(!tray)return cancelVoice();tray.hidden=false;tray.className='voice-tray';tray.innerHTML='<audio controls src="'+voiceURL+'" style="height:36px;flex:1;min-width:140px"></audio><button type="button" class="primary voice-send-btn" style="padding:6px 16px;border-radius:10px" onclick="sendVoice()">إرسال</button><button type="button" class="quiet" style="padding:6px 12px;border-radius:10px;border:1px solid var(--line)" onclick="cancelVoice()">إلغاء</button>'}
+function cancelVoice(){if(recording){const r=recording;recording=null;clearInterval(r.timer);if(r.processor)r.processor.onaudioprocess=null;try{r.source.disconnect()}catch{}try{r.processor.disconnect()}catch{}r.stream.getTracks().forEach(t=>{try{t.stop()}catch{}});try{r.ctx.close()}catch{}}window._voiceAudioProcessor=null;if(voiceURL)URL.revokeObjectURL(voiceURL);voiceURL=null;voiceDraft=null;const tray=$('#voiceTray');if(tray){tray.hidden=true;tray.innerHTML=''}}
+async function sendVoice(){if(!voiceDraft)return;const b=$('#voiceTray .voice-send-btn')||$('#voiceTray button.primary')||$('#voiceTray button');if(b){b.disabled=true;b.textContent='جارٍ الإرسال…';}try{const r=await uploadAudio(voiceDraft.blob,'voice'),sent=await request('action',{type:'message',to:voiceDraft.to,audio:r.id});db=sent.db;cancelVoice();paintMessages(true);toast('تم إرسال الرسالة الصوتية ♫')}catch(e){toast('تعذر إرسال الصوت: '+(e.message||''));if(b){b.disabled=false;b.textContent='إرسال'}}}
 window.addEventListener('pagehide',cancelVoice);
 document.addEventListener('play',e=>{if(e.target.tagName==='AUDIO')document.querySelectorAll('audio').forEach(a=>{if(a!==e.target)a.pause()})},true);
 /* ===== LOADER CONTROLLER ===== */

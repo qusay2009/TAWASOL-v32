@@ -443,8 +443,8 @@ if(location.hash.startsWith('#post-'))query=location.hash.slice(6);
 
 // Server-backed controller. No account records or sessions are stored in LocalStorage.
 let csrf='';
-async function request(path,body){const r=await fetch('/api/'+path,{method:body?'POST':'GET',credentials:'same-origin',headers:body?{'Content-Type':'application/json','X-CSRF-Token':csrf}:{},body:body?JSON.stringify(body):undefined});const data=await r.json();if(!r.ok)throw Object.assign(Error(data.error),{status:r.status});return data}
-async function refresh(){const r=await request('state');db=r.db;current=r.current;csrf=r.csrf;if(db.messages.some(m=>m.to===current&&!m.deliveredAt)){const ack=await request('action',{type:'ackMessages'});db=ack.db}}
+async function request(path,body){const r=await fetch('/api/'+path,{method:body?'POST':'GET',credentials:'same-origin',keepalive:true,headers:body?{'Content-Type':'application/json','X-CSRF-Token':csrf}:{},body:body?JSON.stringify(body):undefined});const data=await r.json();if(!r.ok)throw Object.assign(Error(data.error),{status:r.status});return data}
+async function refresh(){const r=await request('state');db=r.db;current=r.current;csrf=r.csrf;if(db.messages.some(m=>m.to===current&&!m.deliveredAt)){request('action',{type:'ackMessages'}).then(ack=>{db=ack.db}).catch(()=>{})}}
 async function act(type,args={}){try{const r=await request('action',{type,...args});db=r.db;current=r.current;render();return r}catch(e){toast(e.message);if(e.status===401)logout(false);throw e}}
 function auth(){if($('#modal').open)closeModal();modal('<h2>تسجيل الدخول إلى تواصل</h2><form onsubmit="login(event)"><label>البريد الإلكتروني<input name="email" type="email" required autocomplete="username"></label><label>كلمة المرور<input name="password" type="password" required autocomplete="current-password"></label><button class="primary">تسجيل الدخول</button><button type="button" onclick="signup()">إنشاء حساب</button></form>')}
 function signup(){if($('#modal').open)closeModal();modal('<h2>إنشاء حساب</h2><form onsubmit="register(event)"><label>الاسم<input name="name" required maxlength="60"></label><label>البريد الإلكتروني<input name="email" type="email" required autocomplete="username"></label><label>كلمة المرور<input name="password" type="password" required minlength="12" maxlength="256" autocomplete="new-password"></label><p class="muted">استخدم كلمة مرور فريدة من 12 حرفًا على الأقل.</p><button class="primary">إنشاء الحساب</button><button type="button" onclick="auth()">لدي حساب</button></form>')}
@@ -1010,13 +1010,13 @@ async function pollLoop(){
       if(page==='messages'){
         paintMessages();
         const typing=$('#typingIndicator');if(typing)typing.innerHTML=user(chatId)?.typing?'يكتب الآن <i></i><i></i><i></i>':'';
-        if(db.messages.some(m=>m.from===chatId&&m.to===current&&!m.readAt)){const r=await request('action',{type:'readMessages',from:chatId});db=r.db}
+        if(db.messages.some(m=>m.from===chatId&&m.to===current&&!m.readAt)){request('action',{type:'readMessages',from:chatId}).then(r=>{db=r.db}).catch(()=>{})}
         if((me().blocked||[]).includes(chatId)&&$('#main .message-form')){cancelVoice();render()}
       }
       if(page==='watch'){const log=$('#main .chatlog'),r=db.rooms.find(r=>r.id===roomId);if(log&&r)log.innerHTML=r.chat.map(m=>'<p class="comment"><b>'+esc(user(m.by)?.name||'عضو')+'</b> '+esc(m.text)+'</p>').join('')}
     }catch(e){if(e.status===401)logout(false)}finally{polling=false}
   }
-  const delay = (page==='messages'&&chatId)?1000:(page==='messages'?1800:3500);
+  const delay = (page==='messages'&&chatId)?750:(page==='messages'?1200:2500);
   setTimeout(pollLoop, delay);
 }
 pollLoop();

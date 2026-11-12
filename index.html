@@ -123,29 +123,97 @@ body:has(#authPage) header{display:none}
   #authPage .cardwrap{z-index:2}
   #authPage .card{padding:1.5rem}
 }
-/* Mobile Bottom Bar & Voice UI */
+/* Animated Tawasol Logo (A · فقاعة الحوار) */
+.brand{color:var(--ink);letter-spacing:0;font-size:18px;text-decoration:none;display:inline-flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.brand-logo-icon{width:44px;height:44px;border-radius:14px;background:var(--plum);border:1px solid var(--line);display:grid;place-items:center;box-shadow:0 4px 18px -4px rgba(0,0,0,0.35);transition:transform .35s cubic-bezier(.3,1.6,.5,1),border-color .3s;flex-shrink:0}
+.brand:hover .brand-logo-icon{transform:rotate(-6deg) scale(1.08);border-color:var(--blue)}
+.tawasol-logo-svg{width:32px;height:32px;overflow:visible}
+.a-b{stroke:var(--blue);stroke-width:3.5;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;transform-origin:32px 32px;animation:a-d 1s .1s ease-out forwards,a-br 3.6s 1.8s ease-in-out infinite}
+.a-l{stroke:var(--blue);stroke-width:2;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;animation:a-d .5s .9s ease-out forwards}
+.a-1,.a-2{transform-box:fill-box;transform-origin:center;animation:a-p .5s cubic-bezier(.3,1.8,.5,1) both,a-u 2.4s ease-in-out infinite}
+.a-1{fill:var(--blue);animation-delay:.7s,1.8s}
+.a-2{fill:var(--coral);animation-delay:.85s,3s}
+.a-t{fill:#fff;opacity:0;animation:a-tr 2.4s 1.8s ease-in-out infinite}
+@keyframes a-d{to{stroke-dashoffset:0}}
+@keyframes a-p{from{transform:scale(0)}}
+@keyframes a-u{50%{transform:scale(1.22)}}
+@keyframes a-br{50%{transform:scale(1.04)}}
+@keyframes a-tr{0%{transform:translate(23px,27px);opacity:0}15%,85%{opacity:1}100%{transform:translate(41px,33px);opacity:0}}
+.brand-text{display:flex;flex-direction:column;line-height:1.05}
+.brand-title{font-family:"Tajawal",Tahoma,sans-serif;font-weight:800;font-size:20px;color:var(--ink);letter-spacing:-0.5px}
+.brand-sub{font-family:"IBM Plex Sans Arabic",sans-serif;font-weight:700;font-size:9px;letter-spacing:2.5px;color:var(--muted);direction:ltr;text-align:right;margin-top:2px;opacity:.85}
+
+/* Auth card brand header */
+.auth-brand-head{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:1.4rem;text-align:center}
+.auth-logo-box{width:56px;height:56px;border-radius:18px;background:var(--plum);border:1.5px solid var(--line);display:grid;place-items:center;box-shadow:0 10px 30px -8px rgba(0,0,0,0.5),0 0 25px -5px rgba(211,239,138,0.25);animation:float 6s ease-in-out infinite}
+.auth-logo-box svg{width:40px;height:40px}
+
+/* Stories / Quick Circles Tray */
+.quick-circles-card{padding:14px 16px;margin-bottom:20px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.quick-circles-card::-webkit-scrollbar{display:none}
+.quick-circles-row{display:flex;align-items:center;gap:15px;min-width:max-content}
+.quick-circle-item{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;background:none;border:0;padding:0;color:inherit;transition:transform .2s cubic-bezier(0.3,1.4,0.5,1)}
+.quick-circle-item:active{transform:scale(.92)}
+.story-avatar{position:relative;width:54px;height:54px;border-radius:50%;padding:2.5px;background:linear-gradient(135deg,var(--blue),var(--coral));display:grid;place-items:center;box-shadow:0 4px 12px -2px rgba(0,0,0,0.25)}
+.story-avatar .avatar{width:100%;height:100%;border-radius:50%;border:2px solid var(--card)}
+.story-avatar.friend-ring{background:linear-gradient(135deg,#d3ef8a,#ff9f8f)}
+.story-avatar.me-ring{background:var(--soft);border:1.5px dashed var(--blue)}
+.story-add{position:absolute;bottom:-1px;right:-1px;width:18px;height:18px;background:var(--blue);color:#24142a;border-radius:50%;font-size:13px;font-weight:900;display:grid;place-items:center;border:2px solid var(--card)}
+.story-name{font-size:11px;font-weight:600;color:var(--ink);max-width:60px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Mobile FAB */
+.mobile-fab{display:none}
+@media (max-width:768px){
+  .mobile-fab{display:grid!important;place-items:center;position:fixed;bottom:76px;left:18px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#b2d665);color:#24142a;font-size:24px;font-weight:900;box-shadow:0 8px 25px -4px rgba(211,239,138,0.55),0 4px 12px rgba(0,0,0,0.3);z-index:99;border:0;cursor:pointer;transition:transform .25s cubic-bezier(0.3,1.6,0.5,1)}
+  .mobile-fab:active{transform:scale(.9)}
+}
+
+/* Voice & Header buttons */
 .voice-mic-btn{background:var(--plum);color:var(--coral);border:1px solid var(--line);border-radius:24px;padding:8px 14px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:all .2s;white-space:nowrap}
 .voice-mic-btn:hover,.voice-mic-btn:active{background:var(--coral);color:#24142a;transform:scale(1.03)}
 .voice-mic-btn svg{width:18px;height:18px}
 .badge-count{background:var(--coral);color:#24142a;font-size:10px;font-weight:800;border-radius:12px;padding:1px 6px;margin-inline-start:6px}
 .mobile-bottom-nav{display:none}
-@media (max-width:768px){
-  .mobile-bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;height:62px;background:var(--card);border-top:1px solid var(--line);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);z-index:99;align-items:center;justify-content:space-around;padding:0 4px}
-  .mobile-bottom-nav button{background:transparent;border:0;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-family:inherit;padding:6px 8px;position:relative;flex:1;cursor:pointer;border-radius:12px;transition:all .2s}
-  .mobile-bottom-nav button.active{color:var(--blue);font-weight:700}
-  .mobile-bottom-nav button.active svg{transform:scale(1.15);stroke:var(--blue)}
-  .mobile-bottom-nav button svg{width:22px;height:22px;transition:transform .2s}
-  .mobile-bottom-nav .nav-badge{position:absolute;top:4px;right:22%;background:var(--coral);color:#24142a;font-size:10px;font-weight:800;border-radius:10px;min-width:18px;height:18px;line-height:18px;text-align:center;padding:0 4px}
-  body:not(:has(#authPage)){padding-bottom:70px}
-  .layout{margin:10px 0 0!important;padding:0 10px!important}
-  header{height:60px!important;padding:0 12px!important}
-  .inbox{height:calc(100dvh - 140px)!important}
-  .chat-bottom{padding:10px 10px 14px!important}
-  .message-form{gap:8px!important}
-  .voice-mic-btn .mic-text{display:none}
-  .voice-mic-btn{padding:10px;border-radius:50%;width:42px;height:42px;justify-content:center}
+
+/* Tablet / iPad (768px - 1080px) */
+@media (min-width:769px) and (max-width:1080px){
+  .layout{grid-template-columns:205px minmax(0,1fr)!important;gap:20px!important;padding:0 16px!important}
+  .right{display:none!important}
+  .search{max-width:280px!important}
 }
-body:has(#authPage) .mobile-bottom-nav{display:none!important}
+
+/* Mobile Devices (< 768px) */
+@media (max-width:768px){
+  body{padding-bottom:76px!important;overflow-x:hidden!important}
+  header{height:58px!important;padding:0 12px!important;position:sticky!important;top:0!important;z-index:100!important}
+  .search{display:none!important}
+  .head-actions{gap:4px!important}
+  .head-name{display:none!important}
+  .brand-logo-icon{width:36px!important;height:36px!important;border-radius:11px!important}
+  .brand-logo-icon svg{width:26px!important;height:26px!important}
+  .brand-title{font-size:18px!important}
+  .brand-sub{font-size:7.5px!important;letter-spacing:1.5px!important}
+  .layout{display:block!important;margin:8px 0 0!important;padding:0 10px!important}
+  .side,.right{display:none!important}
+  .side.open{display:block!important;position:fixed!important;right:0!important;top:58px!important;width:min(80vw,290px)!important;height:calc(100vh - 58px)!important;background:rgba(28,17,32,0.96)!important;backdrop-filter:blur(25px)!important;-webkit-backdrop-filter:blur(25px)!important;z-index:1001!important;padding:20px 16px!important;box-shadow:-10px 0 40px rgba(0,0,0,0.6)!important;overflow-y:auto!important}
+  .card{border-radius:18px!important;padding:16px!important;margin-bottom:14px!important}
+  .editorial{height:auto!important;min-height:130px!important;padding:18px!important;border-radius:18px!important}
+  .editorial h2{font-size:19px!important;margin-top:8px!important}
+  .editorial .orbital{width:70px!important;height:70px!important;border-width:14px!important;left:12px!important;top:18px!important}
+  .welcome h1{font-size:20px!important}
+  .post-img{max-height:330px!important;border-radius:14px!important}
+  .mobile-bottom-nav{display:flex!important;position:fixed;bottom:0;left:0;right:0;height:62px;background:rgba(28,17,32,0.92);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid var(--line);z-index:999;align-items:center;justify-content:space-around;padding:0 4px env(safe-area-inset-bottom,0px);box-shadow:0 -4px 20px rgba(0,0,0,0.3)}
+  body:not(.dark) .mobile-bottom-nav{background:rgba(255,253,248,0.94)}
+  .mobile-bottom-nav button{background:transparent;border:0;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-family:inherit;padding:6px 6px;position:relative;flex:1;cursor:pointer;border-radius:12px;transition:all .2s cubic-bezier(0.3,1.3,0.5,1)}
+  .mobile-bottom-nav button.active{color:var(--blue);font-weight:700;transform:translateY(-2px)}
+  .mobile-bottom-nav button.active svg{transform:scale(1.18);stroke:var(--blue);filter:drop-shadow(0 2px 6px rgba(211,239,138,0.4))}
+  .mobile-bottom-nav button svg{width:22px;height:22px;transition:transform .2s}
+  .mobile-bottom-nav .nav-badge{position:absolute;top:3px;right:22%;background:var(--coral);color:#24142a;font-size:10px;font-weight:800;border-radius:10px;min-width:18px;height:18px;line-height:18px;text-align:center;padding:0 4px;animation:pulse 2s infinite}
+  .voice-mic-btn{padding:8px 12px!important;border-radius:20px!important;font-size:12px!important}
+  .inbox{height:calc(100dvh - 135px)!important;border-radius:18px!important}
+  .chat-bottom{padding:10px!important}
+}
+body:has(#authPage) .mobile-bottom-nav,body:has(#authPage) .mobile-fab{display:none!important}
 </style></head><body>
 <main class="loader" id="loader" role="status" aria-live="polite" aria-busy="true">
 <canvas id="cv" aria-hidden="true"></canvas>
@@ -173,7 +241,7 @@ body:has(#authPage) .mobile-bottom-nav{display:none!important}
 <p class="hint" id="hint" style="margin:0;font-size:.8rem;color:var(--muted);opacity:.8">المس أي مكان لإرسال نبضة</p>
 </div>
 </main>
-<header><button class="mobile" onclick="document.querySelector('.side').classList.toggle('open')" aria-label="فتح القائمة">☰</button><a class="brand" onclick="go('home')" role="button"><b>t</b>TAWASOL<span style="font-size:12px;letter-spacing:0">تواصل</span></a><form class="search" onsubmit="event.preventDefault();query=this.q.value;go('search')"><input name="q" placeholder="⌕  ابحث عن أشخاص، منشورات، ومجتمعات…" aria-label="البحث"></form><div class="head-actions"><button id="adminHeaderBtn" class="admin-head-btn" onclick="go('admin')" aria-label="وضع الأدمن" title="وضع الأدمن">🛡️ <span>الأدمن</span></button><button onclick="theme()" aria-label="تبديل المظهر">◐</button><button onclick="go('notifications')" aria-label="الإشعارات">♧</button><button onclick="go('messages')" aria-label="الرسائل">✉</button><span id="headUser"></span></div></header>
+<header><button class="mobile" onclick="document.querySelector('.side').classList.toggle('open')" aria-label="فتح القائمة">☰</button><a class="brand" onclick="go('home')" role="button" aria-label="تواصل الرئيسية"><span class="brand-logo-icon"><svg class="tawasol-logo-svg" viewBox="0 0 64 64" fill="none"><path class="a-b" pathLength="1" d="M32 6A24 24 0 1 1 20.5 51L9 56L13.5 44.8A24 24 0 0 1 32 6Z"/><path class="a-l" pathLength="1" d="M23 27L41 33"/><circle class="a-1" cx="23" cy="27" r="5.5"/><circle class="a-2" cx="41" cy="33" r="5.5"/><circle class="a-t" r="2.2"/></svg></span><span class="brand-text"><span class="brand-title">تواصل</span><span class="brand-sub">TAWASOL</span></span></a><form class="search" onsubmit="event.preventDefault();query=this.q.value;go('search')"><input name="q" placeholder="⌕  ابحث عن أشخاص، منشورات، ومجتمعات…" aria-label="البحث"></form><div class="head-actions"><button id="adminHeaderBtn" class="admin-head-btn" onclick="go('admin')" aria-label="وضع الأدمن" title="وضع الأدمن">🛡️ <span>الأدمن</span></button><button onclick="theme()" aria-label="تبديل المظهر">◐</button><button onclick="go('notifications')" aria-label="الإشعارات">♧</button><button onclick="go('messages')" aria-label="الرسائل">✉</button><span id="headUser"></span></div></header>
 <div class="layout"><aside class="side"><div id="mini"></div><nav class="nav" id="nav"></nav><div class="divider"></div><button onclick="go('settings')">⚙ الإعدادات والخصوصية</button><button onclick="logout()" class="danger">⇥ تسجيل الخروج</button><div class="hint" style="margin-top:25px"><b>مساحتك، بطريقتك ✦</b><p>شارك أفكارك واكتشف أشخاصًا يلهمونك كل يوم.</p></div></aside><main id="main"></main><aside class="right" id="right"></aside></div><dialog id="modal"></dialog><div id="toast" role="status"></div>
 <script>
 'use strict';
@@ -336,6 +404,8 @@ let bNav=$('#mobileBottomNav');
 if(!bNav){bNav=document.createElement('nav');bNav.id='mobileBottomNav';bNav.className='mobile-bottom-nav';document.body.append(bNav);}
 const mItems=[['home','home','الرئيسية',0],['messages','chat','الرسائل',unreadMsgs],['notifications','bell','الإشعارات',unreadNotifs],['friends','users','الأصدقاء',0],['profile','user','حسابي',0]];
 bNav.innerHTML=mItems.map(([p,i,t,c])=>'<button class="'+(page===p?'active':'')+'" onclick="go(\''+p+'\''+(p==='profile'?',current':'')+')">'+icon(i)+(c>0?'<span class="nav-badge">'+c+'</span>':'')+'<span>'+t+'</span></button>').join('');
+let fab=$('#mobileFab');
+if(!fab){fab=document.createElement('button');fab.id='mobileFab';fab.className='mobile-fab';fab.setAttribute('aria-label','منشور جديد');fab.innerHTML='✦';fab.onclick=()=>{window.scrollTo({top:0,behavior:'smooth'});document.querySelector('.compose textarea')?.focus()};document.body.append(fab);}
 const side=document.querySelector('.side');side.querySelector('.hint')?.remove();
 side.querySelectorAll(':scope > button').forEach(b=>{if(b.getAttribute('onclick')?.includes('settings'))b.innerHTML=icon('settings')+'الإعدادات';else if(b.getAttribute('onclick')?.includes('logout'))b.innerHTML=icon('logout')+'تسجيل الخروج'});
 const groupsView=db.groups.slice(0,3).map(g=>'<button class="row" style="width:100%;justify-content:start;margin:10px 0" onclick="go(\'groups\')"><span class="round-icon">'+icon('grid')+'</span><div style="text-align:right"><b>'+esc(g.name)+'</b><div class="muted">'+g.members.length+' أعضاء</div></div></button>').join('');
@@ -347,7 +417,8 @@ $('#main').querySelectorAll('[onchange]').forEach(b=>{if(b.getAttribute('onchang
 if(page==='messages'){paintMessages(true);lastMessages=''}
 }
 function go(p,id){if(recording||voiceDraft){toast('أرسل التسجيل أو ألغِه قبل مغادرة المحادثة');return}page=p;if(id)profileId=id;document.querySelector('.side').classList.remove('open');render();window.scrollTo(0,0)}
-function home(){return heading('بينك وبين دائرتك.','لحظات تستحق المشاركة')+'<div class="editorial"><span class="kicker">LITTLE MOMENTS. REAL CONNECTIONS.</span><h2>أقرب لبعض.<br>على طبيعتنا.</h2><div class="orbital"></div><span class="spark">✳</span></div>'+composer()+'<div class="row between" style="margin:25px 0 15px"><h2 style="margin:0">من دائرتك</h2><span class="muted">الأحدث أولًا</span></div>'+postList(db.posts)}
+function quickCircles(){const peers=db.users.filter(u=>u.id!==current&&u.active).slice(0,10);return '<div class="quick-circles-card card"><div class="quick-circles-row"><button class="quick-circle-item" onclick="document.querySelector(\'.compose textarea\')?.focus()"><div class="story-avatar me-ring">'+avatar(me())+'<span class="story-add">+</span></div><span class="story-name">لحظتي</span></button>'+(peers.length?peers.map(u=>'<button class="quick-circle-item" onclick="startChatWith(\''+u.id+'\')"><div class="story-avatar '+(me().following.includes(u.id)?'friend-ring':'')+'">'+avatar(u)+'</div><span class="story-name">'+esc(u.name.split(' ')[0])+'</span></button>').join(''):'<span class="muted" style="font-size:12px;padding:10px">أضف أصدقاء لتظهر لحظاتهم هنا ✦</span>')+'</div></div>'}
+function home(){return heading('بينك وبين دائرتك.','لحظات تستحق المشاركة')+quickCircles()+'<div class="editorial"><span class="kicker">LITTLE MOMENTS. REAL CONNECTIONS.</span><h2>أقرب لبعض.<br>على طبيعتنا.</h2><div class="orbital"></div><span class="spark">✳</span></div>'+composer()+'<div class="row between" style="margin:25px 0 15px"><h2 style="margin:0">من دائرتك</h2><span class="muted">الأحدث أولًا</span></div>'+postList(db.posts)}
 function composer(){return '<form class="card compose" onsubmit="publish(event)"><div class="row">'+avatar(me())+'<textarea name="text" maxlength="5000" placeholder="شارك لحظة، فكرة، أو حكاية…"></textarea></div><img id="photoPreview" class="post-img" hidden alt="معاينة الصورة"><div class="divider"></div><div class="row between"><label class="file">'+icon('image')+'إضافة صورة<input type="file" name="photo" accept="image/png,image/jpeg,image/webp" onchange="previewPhoto(this)"></label><button class="primary" type="submit">'+icon('send')+'نشر</button></div><details class="media-options"><summary>♫ موسيقى على صورتك</summary><label class="muted">اختر مقطعًا تملك حق استخدامه<input name="music" type="file" accept="audio/*" onchange="previewMusic(this)"></label><audio id="musicPreview" controls hidden preload="metadata"></audio><div class="row"><label class="muted grow">البداية بالثواني<input name="musicStart" type="number" min="0" value="0" step="1"></label><label class="muted grow">المدة، حتى 30 ثانية<input name="musicLength" type="number" min="1" max="30" value="15"></label></div><button type="button" class="quiet" onclick="removeMusic(this.form)">إزالة المقطع</button></details></form>'}
 let musicPreviewURL='';
 function previewMusic(input){if(musicPreviewURL)URL.revokeObjectURL(musicPreviewURL);const f=input.files[0],a=$('#musicPreview');if(!f)return;if(f.size>15000000){input.value='';return toast('اختر ملفًا أصغر من 15MB')}musicPreviewURL=URL.createObjectURL(f);a.src=musicPreviewURL;a.hidden=false}
@@ -366,7 +437,7 @@ profile=function(){const id=profileId||current,u=lookup(id);if(!u)return '<div c
 async function blockUser(id){if(!confirm('حظر الحساب وإلغاء الصداقة؟'))return;try{await act('block',{id});discoveries=discoveries.filter(x=>x.id!==id);go('friends')}catch{}}
 function settings(){return heading('على مزاجك.')+'<div class="card"><h2>الحساب والمظهر</h2><p class="muted">'+esc(me().email)+'</p><div class="row" style="flex-wrap:wrap"><button class="quiet" onclick="editProfile()">'+icon('user')+'تعديل الملف</button><button class="quiet" onclick="theme()">'+icon('sun')+'تبديل المظهر</button><button class="quiet" onclick="exportData()">تنزيل بياناتي</button></div></div><div class="card"><h2>الحسابات المحظورة</h2>'+((me().blocked||[]).length?(me().blocked||[]).map(id=>'<div class="row between person"><span class="muted">حساب محظور · '+esc(id.slice(0,6))+'</span><button onclick="act(\'block\',{id:\''+id+'\'}).catch(()=>{})">إلغاء الحظر</button></div>').join(''):'<p class="muted">لا توجد حسابات محظورة.</p>')+'</div>'}
 function getNewAuthHTML(mode){
-return '<main class="stage" id="stage"><div class="bg" aria-hidden="true"></div><section class="scene" aria-hidden="true"><div class="layer" style="--d:-8"><svg class="orbits" viewBox="0 0 800 800"><circle class="ring" cx="400" cy="400" r="120"/><circle class="ring" cx="400" cy="400" r="200"/><circle class="ring" cx="400" cy="400" r="280"/><g class="orb" style="--t:38s"><polygon class="dash" points="520,400 340,504 340,296"/><circle class="nd" cx="520" cy="400" r="7"/><circle class="nd" cx="340" cy="504" r="5"/><circle class="nd c" cx="340" cy="296" r="6"/></g><g class="orb r" style="--t:62s"><polygon class="dash c" points="600,400 400,600 200,400 400,200"/><circle class="nd" cx="600" cy="400" r="6"/><circle class="nd c" cx="400" cy="600" r="8"/><circle class="nd" cx="200" cy="400" r="5"/><circle class="nd c" cx="400" cy="200" r="6"/></g><g class="orb" style="--t:90s"><polygon class="dash" points="680,400 260,642 260,158"/><circle class="nd c" cx="680" cy="400" r="7"/><circle class="nd" cx="260" cy="642" r="9"/><circle class="nd" cx="260" cy="158" r="6"/></g><circle class="core" cx="400" cy="400" r="16"/></svg></div><div class="layer" style="--d:18"><div class="chat" style="inset-block-start:14%;inset-inline-start:6%;--f:7s"><i></i><div><b style="--w:84px"></b><b style="--w:52px"></b></div></div><div class="chat c" style="inset-block-start:30%;inset-inline-end:2%;--f:9s;--fd:-2s"><i></i><div><b style="--w:64px"></b><span class="dots"><s></s><s></s><s></s></span></div></div><div class="chat" style="inset-block-end:24%;inset-inline-start:2%;--f:8s;--fd:-4s"><i></i><div><b style="--w:96px"></b><b style="--w:40px"></b></div></div><div class="chat c" style="inset-block-end:10%;inset-inline-end:12%;--f:10s;--fd:-1s"><i></i><div><b style="--w:70px"></b></div></div></div><p class="tag">مساحة هادئة تجمعك بأصدقائك.</p></section><section class="cardwrap"><div class="card" id="authCard" data-mode="'+mode+'"><div class="seg" id="authSeg" data-mode="'+mode+'" role="tablist"><span class="pill"></span><button type="button" role="tab" id="tab-login" aria-selected="'+(mode==='login')+'" onclick="switchAuthTab(\'login\')">تسجيل الدخول</button><button type="button" role="tab" id="tab-signup" aria-selected="'+(mode==='signup')+'" onclick="switchAuthTab(\'signup\')">حساب جديد</button></div><h1 id="ttl">'+(mode==='signup'?'لنبدأ حكايتك':'أهلاً بعودتك')+'</h1><p class="sub" id="sub">'+(mode==='signup'?'أنشئ حسابك وانضم إلى دائرتك.':'سجّل دخولك لتكمل محادثاتك.')+'</p><form id="newAuthForm" novalidate onsubmit="handleAuthSubmit(event)"><div class="alert" id="authAlert" role="alert"></div><div class="fold" id="nameFold" aria-hidden="'+(mode!=='signup')+'"><div><div class="field"><label for="authName">الاسم</label><div class="box" id="bx-name"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg><input id="authName" name="name" type="text" autocomplete="name" placeholder="اسمك الكامل" '+(mode==='signup'?'required':'disabled')+'></div><p class="msg" id="er-name"></p></div></div></div><div class="field"><label for="authEmail">البريد الإلكتروني</label><div class="box" id="bx-email"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg><input id="authEmail" name="email" type="email" inputmode="email" autocomplete="username" placeholder="name@example.com" required dir="ltr"></div><p class="msg" id="er-email"></p></div><div class="field"><label for="authPass">كلمة المرور</label><div class="box" id="bx-pass"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><input id="authPass" name="password" type="password" autocomplete="'+(mode==='signup'?'new-password':'current-password')+'" placeholder="'+(mode==='signup'?'12 حرفًا على الأقل':'••••••••')+'" required><button class="eye" id="authEye" type="button" aria-label="إظهار كلمة المرور" onclick="togglePassVisibility()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path id="eyep" d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path id="eyes" d="M4 4l16 16" style="display:none"/></svg></button></div><p class="msg" id="er-pass"></p></div><button class="go" id="authGo" type="submit"><span class="spin" aria-hidden="true"></span><span id="goTxt">'+(mode==='signup'?'إنشاء الحساب':'تسجيل الدخول')+'</span></button></form></div></section></main>';
+return '<main class="stage" id="stage"><div class="bg" aria-hidden="true"></div><section class="scene" aria-hidden="true"><div class="layer" style="--d:-8"><svg class="orbits" viewBox="0 0 800 800"><circle class="ring" cx="400" cy="400" r="120"/><circle class="ring" cx="400" cy="400" r="200"/><circle class="ring" cx="400" cy="400" r="280"/><g class="orb" style="--t:38s"><polygon class="dash" points="520,400 340,504 340,296"/><circle class="nd" cx="520" cy="400" r="7"/><circle class="nd" cx="340" cy="504" r="5"/><circle class="nd c" cx="340" cy="296" r="6"/></g><g class="orb r" style="--t:62s"><polygon class="dash c" points="600,400 400,600 200,400 400,200"/><circle class="nd" cx="600" cy="400" r="6"/><circle class="nd c" cx="400" cy="600" r="8"/><circle class="nd" cx="200" cy="400" r="5"/><circle class="nd c" cx="400" cy="200" r="6"/></g><g class="orb" style="--t:90s"><polygon class="dash" points="680,400 260,642 260,158"/><circle class="nd c" cx="680" cy="400" r="7"/><circle class="nd" cx="260" cy="642" r="9"/><circle class="nd" cx="260" cy="158" r="6"/></g><circle class="core" cx="400" cy="400" r="16"/></svg></div><div class="layer" style="--d:18"><div class="chat" style="inset-block-start:14%;inset-inline-start:6%;--f:7s"><i></i><div><b style="--w:84px"></b><b style="--w:52px"></b></div></div><div class="chat c" style="inset-block-start:30%;inset-inline-end:2%;--f:9s;--fd:-2s"><i></i><div><b style="--w:64px"></b><span class="dots"><s></s><s></s><s></s></span></div></div><div class="chat" style="inset-block-end:24%;inset-inline-start:2%;--f:8s;--fd:-4s"><i></i><div><b style="--w:96px"></b><b style="--w:40px"></b></div></div><div class="chat c" style="inset-block-end:10%;inset-inline-end:12%;--f:10s;--fd:-1s"><i></i><div><b style="--w:70px"></b></div></div></div><p class="tag">مساحة هادئة تجمعك بأصدقائك.</p></section><section class="cardwrap"><div class="card" id="authCard" data-mode="'+mode+'"><div class="auth-brand-head"><div class="auth-logo-box"><svg class="tawasol-logo-svg" viewBox="0 0 64 64" fill="none"><path class="a-b" pathLength="1" d="M32 6A24 24 0 1 1 20.5 51L9 56L13.5 44.8A24 24 0 0 1 32 6Z"/><path class="a-l" pathLength="1" d="M23 27L41 33"/><circle class="a-1" cx="23" cy="27" r="5.5"/><circle class="a-2" cx="41" cy="33" r="5.5"/><circle class="a-t" r="2.2"/></svg></div><div class="brand-text" style="align-items:center"><span class="brand-title" style="font-size:24px">تواصل</span><span class="brand-sub" style="letter-spacing:3px">TAWASOL</span></div></div><div class="seg" id="authSeg" data-mode="'+mode+'" role="tablist"><span class="pill"></span><button type="button" role="tab" id="tab-login" aria-selected="'+(mode==='login')+'" onclick="switchAuthTab(\'login\')">تسجيل الدخول</button><button type="button" role="tab" id="tab-signup" aria-selected="'+(mode==='signup')+'" onclick="switchAuthTab(\'signup\')">حساب جديد</button></div><h1 id="ttl">'+(mode==='signup'?'لنبدأ حكايتك':'أهلاً بعودتك')+'</h1><p class="sub" id="sub">'+(mode==='signup'?'أنشئ حسابك وانضم إلى دائرتك.':'سجّل دخولك لتكمل محادثاتك.')+'</p><form id="newAuthForm" novalidate onsubmit="handleAuthSubmit(event)"><div class="alert" id="authAlert" role="alert"></div><div class="fold" id="nameFold" aria-hidden="'+(mode!=='signup')+'"><div><div class="field"><label for="authName">الاسم</label><div class="box" id="bx-name"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg><input id="authName" name="name" type="text" autocomplete="name" placeholder="اسمك الكامل" '+(mode==='signup'?'required':'disabled')+'></div><p class="msg" id="er-name"></p></div></div></div><div class="field"><label for="authEmail">البريد الإلكتروني</label><div class="box" id="bx-email"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg><input id="authEmail" name="email" type="email" inputmode="email" autocomplete="username" placeholder="name@example.com" required dir="ltr"></div><p class="msg" id="er-email"></p></div><div class="field"><label for="authPass">كلمة المرور</label><div class="box" id="bx-pass"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><input id="authPass" name="password" type="password" autocomplete="'+(mode==='signup'?'new-password':'current-password')+'" placeholder="'+(mode==='signup'?'12 حرفًا على الأقل':'••••••••')+'" required><button class="eye" id="authEye" type="button" aria-label="إظهار كلمة المرور" onclick="togglePassVisibility()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path id="eyep" d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path id="eyes" d="M4 4l16 16" style="display:none"/></svg></button></div><p class="msg" id="er-pass"></p></div><button class="go" id="authGo" type="submit"><span class="spin" aria-hidden="true"></span><span id="goTxt">'+(mode==='signup'?'إنشاء الحساب':'تسجيل الدخول')+'</span></button></form></div></section></main>';
 }
 function switchAuthTab(m){
 authMode=m;const card=$('#authCard'),seg=$('#authSeg');if(!card||!seg)return;
@@ -397,7 +468,7 @@ function showAuthError(msg){const alert=$('#authAlert'),card=$('#authCard');if(a
 function showAuthPage(mode='login'){authMode=mode;document.body.classList.remove('messaging');document.querySelector('.layout').style.display='none';let shell=$('#authPage');if(!shell){shell=document.createElement('div');shell.id='authPage';document.body.append(shell)}shell.innerHTML=getNewAuthHTML(mode);$('#headUser').innerHTML='';}
 function auth(){showAuthPage('login')}
 function signup(){if($('#modal').open)closeModal();showAuthPage('signup')}
-async function logout(send=true){cancelVoice();if(send)try{await request('logout',{})}catch{}current=null;csrf='';discoveries=[];db={users:[],posts:[],groups:[],messages:[],reports:[],notifications:[],rooms:[],settings:{}};$('#mobileBottomNav')?.remove();showAuthPage()}
+async function logout(send=true){cancelVoice();if(send)try{await request('logout',{})}catch{}current=null;csrf='';discoveries=[];db={users:[],posts:[],groups:[],messages:[],reports:[],notifications:[],rooms:[],settings:{}};$('#mobileBottomNav')?.remove();$('#mobileFab')?.remove();showAuthPage()}
 function messages(){
 const ids=new Set([...db.users.filter(u=>u.id!==current&&u.active).map(u=>u.id),...db.messages.flatMap(m=>[m.from,m.to]).filter(id=>id!==current)]),peers=[...ids].map(id=>user(id)||{id,name:'مستخدم'});
 const selected=peers.find(u=>u.id===chatId)||user(chatId);

@@ -1,5 +1,14 @@
 <!doctype html>
 <html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="تواصل، مساحة تجمعك بمن يشبهك. مساحة خاصة تجمع الأصدقاء"><title>TAWASOL — تواصل</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#170f1b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="تواصل">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="icon" type="image/svg+xml" href="/icon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Tajawal:wght@800&display=swap">
 <style>
@@ -161,10 +170,25 @@ body:has(#authPage) header{display:none}
 .story-add{position:absolute;bottom:-1px;right:-1px;width:18px;height:18px;background:var(--blue);color:#24142a;border-radius:50%;font-size:13px;font-weight:900;display:grid;place-items:center;border:2px solid var(--card)}
 .story-name{font-size:11px;font-weight:600;color:var(--ink);max-width:60px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
+/* PWA Header & Modal */
+.pwa-head-btn{background:linear-gradient(135deg,rgba(211,239,138,0.22),rgba(255,159,143,0.18));color:var(--ink);border:1px solid var(--blue);border-radius:12px;padding:7px 12px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.pwa-head-btn:hover{transform:scale(1.04);box-shadow:0 4px 14px rgba(211,239,138,0.3)}
+.pwa-modal-box{text-align:center;padding:12px 6px}
+.pwa-app-icon{width:84px;height:84px;border-radius:24px;margin:0 auto 16px;background:linear-gradient(135deg,var(--blue),var(--coral));padding:3px;box-shadow:0 12px 35px -6px rgba(211,239,138,0.45);display:grid;place-items:center}
+.pwa-app-icon img,.pwa-app-icon svg{width:100%;height:100%;border-radius:21px;display:block}
+.pwa-title{font-size:22px;font-weight:800;margin:0 0 8px;color:var(--ink);letter-spacing:-0.5px}
+.pwa-desc{color:var(--muted);font-size:13px;line-height:1.8;margin:0 0 20px}
+.pwa-btn-install{background:linear-gradient(135deg,var(--blue),#b2d665);color:#24142a;font-size:15px;font-weight:800;padding:12px 24px;border-radius:16px;width:100%;box-shadow:0 8px 25px -4px rgba(211,239,138,0.5);border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;transition:transform .2s}
+.pwa-btn-install:active{transform:scale(.97)}
+.pwa-btn-skip{background:transparent;color:var(--muted);font-size:13px;padding:8px;width:100%;border:0;cursor:pointer}
+.ios-install-steps{background:var(--soft);border:1px solid var(--line);border-radius:16px;padding:16px;text-align:right;margin:16px 0;display:grid;gap:12px;font-size:13px}
+.ios-step-row{display:flex;align-items:flex-start;gap:10px}
+.ios-step-num{width:22px;height:22px;border-radius:50%;background:var(--coral);color:#24142a;font-weight:800;font-size:11px;display:grid;place-items:center;flex-shrink:0;margin-top:2px}
+
 /* Mobile FAB */
 .mobile-fab{display:none}
 @media (max-width:768px){
-  .mobile-fab{display:grid!important;place-items:center;position:fixed;bottom:76px;left:18px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#b2d665);color:#24142a;font-size:24px;font-weight:900;box-shadow:0 8px 25px -4px rgba(211,239,138,0.55),0 4px 12px rgba(0,0,0,0.3);z-index:99;border:0;cursor:pointer;transition:transform .25s cubic-bezier(0.3,1.6,0.5,1)}
+  .mobile-fab{display:grid!important;place-items:center;position:fixed;bottom:calc(76px + env(safe-area-inset-bottom,0px));left:16px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#b2d665);color:#24142a;font-size:24px;font-weight:900;box-shadow:0 8px 25px -4px rgba(211,239,138,0.55),0 4px 12px rgba(0,0,0,0.3);z-index:99;border:0;cursor:pointer;transition:transform .25s cubic-bezier(0.3,1.6,0.5,1)}
   .mobile-fab:active{transform:scale(.9)}
 }
 
@@ -182,44 +206,59 @@ body:has(#authPage) header{display:none}
   .search{max-width:280px!important}
 }
 
-/* Mobile Devices (< 768px) */
+/* Dedicated Mobile Design System (< 768px) */
 @media (max-width:768px){
-  body{padding-bottom:76px!important;overflow-x:hidden!important}
-  header{height:58px!important;padding:0 12px!important;position:sticky!important;top:0!important;z-index:100!important}
+  body{padding-bottom:calc(68px + env(safe-area-inset-bottom,0px))!important;overflow-x:hidden!important}
+  header{height:54px!important;padding:0 12px!important;position:sticky!important;top:0!important;z-index:100!important;background:rgba(23,15,27,0.92)!important;backdrop-filter:blur(20px)!important;-webkit-backdrop-filter:blur(20px)!important}
+  body:not(.dark) header{background:rgba(246,243,236,0.94)!important}
   .search{display:none!important}
-  .head-actions{gap:4px!important}
+  .head-actions{gap:6px!important}
   .head-name{display:none!important}
-  .brand-logo-icon{width:36px!important;height:36px!important;border-radius:11px!important}
-  .brand-logo-icon svg{width:26px!important;height:26px!important}
-  .brand-title{font-size:18px!important}
-  .brand-sub{font-size:7.5px!important;letter-spacing:1.5px!important}
-  .layout{display:block!important;margin:8px 0 0!important;padding:0 10px!important}
+  .pwa-head-btn span{display:none!important}
+  .pwa-head-btn{padding:6px 9px!important;border-radius:10px!important}
+  .brand-logo-icon{width:34px!important;height:34px!important;border-radius:10px!important}
+  .brand-logo-icon svg{width:24px!important;height:24px!important}
+  .brand-title{font-size:17px!important}
+  .brand-sub{font-size:7px!important;letter-spacing:1px!important}
+  .layout{display:block!important;margin:6px 0 0!important;padding:0 8px!important}
   .side,.right{display:none!important}
-  .side.open{display:block!important;position:fixed!important;right:0!important;top:58px!important;width:min(80vw,290px)!important;height:calc(100vh - 58px)!important;background:rgba(28,17,32,0.96)!important;backdrop-filter:blur(25px)!important;-webkit-backdrop-filter:blur(25px)!important;z-index:1001!important;padding:20px 16px!important;box-shadow:-10px 0 40px rgba(0,0,0,0.6)!important;overflow-y:auto!important}
-  .card{border-radius:18px!important;padding:16px!important;margin-bottom:14px!important}
-  .editorial{height:auto!important;min-height:130px!important;padding:18px!important;border-radius:18px!important}
-  .editorial h2{font-size:19px!important;margin-top:8px!important}
-  .editorial .orbital{width:70px!important;height:70px!important;border-width:14px!important;left:12px!important;top:18px!important}
-  .welcome h1{font-size:20px!important}
-  .post-img{max-height:330px!important;border-radius:14px!important}
-  .mobile-bottom-nav{display:flex!important;position:fixed;bottom:0;left:0;right:0;height:62px;background:rgba(28,17,32,0.92);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid var(--line);z-index:999;align-items:center;justify-content:space-around;padding:0 4px env(safe-area-inset-bottom,0px);box-shadow:0 -4px 20px rgba(0,0,0,0.3)}
-  body:not(.dark) .mobile-bottom-nav{background:rgba(255,253,248,0.94)}
-  .mobile-bottom-nav button{background:transparent;border:0;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-family:inherit;padding:6px 6px;position:relative;flex:1;cursor:pointer;border-radius:12px;transition:all .2s cubic-bezier(0.3,1.3,0.5,1)}
-  .mobile-bottom-nav button.active{color:var(--blue);font-weight:700;transform:translateY(-2px)}
-  .mobile-bottom-nav button.active svg{transform:scale(1.18);stroke:var(--blue);filter:drop-shadow(0 2px 6px rgba(211,239,138,0.4))}
+  .side.open{display:block!important;position:fixed!important;right:0!important;top:54px!important;width:min(82vw,300px)!important;height:calc(100vh - 54px)!important;background:rgba(28,17,32,0.97)!important;backdrop-filter:blur(25px)!important;-webkit-backdrop-filter:blur(25px)!important;z-index:1001!important;padding:20px 16px!important;box-shadow:-10px 0 40px rgba(0,0,0,0.6)!important;overflow-y:auto!important}
+  .card{border-radius:18px!important;padding:16px!important;margin-bottom:12px!important}
+  .editorial{height:auto!important;min-height:120px!important;padding:16px!important;border-radius:18px!important}
+  .editorial h2{font-size:18px!important;margin-top:6px!important}
+  .editorial .orbital{width:65px!important;height:65px!important;border-width:12px!important;left:10px!important;top:15px!important}
+  .welcome h1{font-size:19px!important}
+  .post-img{max-height:320px!important;border-radius:14px!important}
+  
+  /* Mobile Bottom Navigation Bar */
+  .mobile-bottom-nav{display:flex!important;position:fixed;bottom:0;left:0;right:0;height:calc(58px + env(safe-area-inset-bottom,0px));background:rgba(24,15,27,0.94);backdrop-filter:blur(25px);-webkit-backdrop-filter:blur(25px);border-top:1px solid var(--line);z-index:999;align-items:flex-start;justify-content:space-around;padding:6px 4px env(safe-area-inset-bottom,0px);box-shadow:0 -4px 25px rgba(0,0,0,0.35)}
+  body:not(.dark) .mobile-bottom-nav{background:rgba(255,253,248,0.96)}
+  .mobile-bottom-nav button{background:transparent;border:0;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;font-family:inherit;padding:4px 6px;position:relative;flex:1;cursor:pointer;border-radius:12px;transition:all .2s cubic-bezier(0.3,1.3,0.5,1)}
+  .mobile-bottom-nav button.active{color:var(--blue);font-weight:700}
+  .mobile-bottom-nav button.active svg{transform:scale(1.15);stroke:var(--blue);filter:drop-shadow(0 2px 6px rgba(211,239,138,0.45))}
   .mobile-bottom-nav button svg{width:22px;height:22px;transition:transform .2s}
-  .mobile-bottom-nav .nav-badge{position:absolute;top:3px;right:22%;background:var(--coral);color:#24142a;font-size:10px;font-weight:800;border-radius:10px;min-width:18px;height:18px;line-height:18px;text-align:center;padding:0 4px;animation:pulse 2s infinite}
-  .voice-mic-btn{padding:8px 12px!important;border-radius:20px!important;font-size:12px!important}
-  .inbox{height:calc(100dvh - 135px)!important;border-radius:18px!important}
-  .chat-bottom{padding:10px!important}
-  /* Fix: make message form fully visible on mobile — rearrange send/mic buttons */
-  .message-form{flex-wrap:wrap!important}
-  .message-form textarea{order:1;flex:1 1 100%!important;min-width:0!important;margin-bottom:6px!important}
-  .message-form .voice-mic-btn{order:2;flex:0 0 auto!important}
-  .message-form .send-round{order:3;flex:0 0 auto!important}
-  /* Reduce voice mic button size on mobile to not block send */
+  .mobile-bottom-nav .nav-badge{position:absolute;top:2px;right:22%;background:var(--coral);color:#24142a;font-size:10px;font-weight:800;border-radius:10px;min-width:18px;height:18px;line-height:18px;text-align:center;padding:0 4px;animation:pulse 2s infinite}
+  
+  /* Native Fullscreen Mobile Chat Experience (WhatsApp/Telegram style) */
+  body:has(.inbox.has-chat){padding-bottom:0!important;overflow:hidden!important}
+  body:has(.inbox.has-chat) header{display:none!important}
+  body:has(.inbox.has-chat) .mobile-bottom-nav,
+  body:has(.inbox.has-chat) .mobile-fab,
+  .inbox.has-chat ~ .mobile-bottom-nav,
+  .inbox.has-chat ~ .mobile-fab{display:none!important}
+  .inbox.has-chat{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;z-index:1000!important;border-radius:0!important;border:0!important;background:var(--bg)!important;display:flex!important;flex-direction:column!important}
+  .inbox.has-chat .conversation{display:flex!important;flex-direction:column!important;height:100dvh!important;width:100%!important}
+  .inbox.has-chat .chat-top{height:56px!important;padding:0 12px!important;position:sticky!important;top:0!important;z-index:20!important;border-radius:0!important;background:rgba(28,17,32,0.95)!important;backdrop-filter:blur(20px)!important}
+  body:not(.dark) .inbox.has-chat .chat-top{background:rgba(255,253,248,0.96)!important}
+  .inbox.has-chat .chat-scroll{flex:1!important;padding:12px 10px!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important}
+  .inbox.has-chat .chat-bottom{padding:8px 10px max(10px,env(safe-area-inset-bottom,10px))!important;background:rgba(28,17,32,0.95)!important;border-top:1px solid var(--line)!important;backdrop-filter:blur(20px)!important}
+  body:not(.dark) .inbox.has-chat .chat-bottom{background:rgba(255,253,248,0.96)!important}
+  .message-form{display:flex!important;flex-direction:row!important;align-items:center!important;gap:8px!important;flex-wrap:nowrap!important}
+  .message-form textarea{flex:1!important;min-width:0!important;min-height:42px!important;max-height:85px!important;border-radius:22px!important;padding:10px 16px!important;font-size:14px!important;order:2!important;margin:0!important}
+  .message-form .voice-mic-btn{order:1!important;width:42px!important;height:42px!important;min-width:42px!important;border-radius:50%!important;padding:0!important;display:grid!important;place-items:center!important;flex:0 0 42px!important}
   .message-form .voice-mic-btn .mic-text{display:none!important}
-  .message-form .voice-mic-btn{padding:6px 10px!important;border-radius:50%!important;width:42px!important;height:42px!important}
+  .message-form .send-round{order:3!important;width:42px!important;height:42px!important;min-width:42px!important;border-radius:50%!important;padding:0!important;display:grid!important;place-items:center!important;flex:0 0 42px!important}
+  .voice-tray{padding:10px 14px!important;border-radius:16px!important;gap:10px!important}
 }
 body:has(#authPage) .mobile-bottom-nav,body:has(#authPage) .mobile-fab{display:none!important}
 
@@ -280,7 +319,7 @@ body:has(#authPage) .mobile-bottom-nav,body:has(#authPage) .mobile-fab{display:n
 <p class="hint" id="hint" style="margin:0;font-size:.8rem;color:var(--muted);opacity:.8">المس أي مكان لإرسال نبضة</p>
 </div>
 </main>
-<header><button class="mobile" onclick="document.querySelector('.side').classList.toggle('open')" aria-label="فتح القائمة">☰</button><a class="brand" onclick="go('home')" role="button" aria-label="تواصل الرئيسية"><span class="brand-logo-icon"><svg class="tawasol-logo-svg" viewBox="0 0 64 64" fill="none"><path class="a-b" pathLength="1" d="M32 6A24 24 0 1 1 20.5 51L9 56L13.5 44.8A24 24 0 0 1 32 6Z"/><path class="a-l" pathLength="1" d="M23 27L41 33"/><circle class="a-1" cx="23" cy="27" r="5.5"/><circle class="a-2" cx="41" cy="33" r="5.5"/><circle class="a-t" r="2.2"/></svg></span><span class="brand-text"><span class="brand-title">تواصل</span><span class="brand-sub">TAWASOL</span></span></a><form class="search" onsubmit="event.preventDefault();query=this.q.value;go('search')"><input name="q" placeholder="⌕  ابحث عن أشخاص، منشورات، ومجتمعات…" aria-label="البحث"></form><div class="head-actions"><button id="adminHeaderBtn" class="admin-head-btn" onclick="go('admin')" aria-label="وضع الأدمن" title="وضع الأدمن">🛡️ <span>الأدمن</span></button><button onclick="theme()" aria-label="تبديل المظهر">◐</button><button onclick="go('notifications')" aria-label="الإشعارات">♧</button><button onclick="go('messages')" aria-label="الرسائل">✉</button><span id="headUser"></span></div></header>
+<header><button class="mobile" onclick="document.querySelector('.side').classList.toggle('open')" aria-label="فتح القائمة">☰</button><a class="brand" onclick="go('home')" role="button" aria-label="تواصل الرئيسية"><span class="brand-logo-icon"><svg class="tawasol-logo-svg" viewBox="0 0 64 64" fill="none"><path class="a-b" pathLength="1" d="M32 6A24 24 0 1 1 20.5 51L9 56L13.5 44.8A24 24 0 0 1 32 6Z"/><path class="a-l" pathLength="1" d="M23 27L41 33"/><circle class="a-1" cx="23" cy="27" r="5.5"/><circle class="a-2" cx="41" cy="33" r="5.5"/><circle class="a-t" r="2.2"/></svg></span><span class="brand-text"><span class="brand-title">تواصل</span><span class="brand-sub">TAWASOL</span></span></a><form class="search" onsubmit="event.preventDefault();query=this.q.value;go('search')"><input name="q" placeholder="⌕  ابحث عن أشخاص، منشورات، ومجتمعات…" aria-label="البحث"></form><div class="head-actions"><button id="pwaInstallBtn" class="pwa-head-btn" onclick="promptPwaInstall(false)" aria-label="تثبيت التطبيق" title="تثبيت تطبيق تواصل على الهاتف">📱 <span>تثبيت التطبيق</span></button><button id="adminHeaderBtn" class="admin-head-btn" onclick="go('admin')" aria-label="وضع الأدمن" title="وضع الأدمن">🛡️ <span>الأدمن</span></button><button onclick="theme()" aria-label="تبديل المظهر">◐</button><button onclick="go('notifications')" aria-label="الإشعارات">♧</button><button onclick="go('messages')" aria-label="الرسائل">✉</button><span id="headUser"></span></div></header>
 <div class="layout"><aside class="side"><div id="mini"></div><nav class="nav" id="nav"></nav><div class="divider"></div><button onclick="go('settings')">⚙ الإعدادات والخصوصية</button><button onclick="logout()" class="danger">⇥ تسجيل الخروج</button><div class="hint" style="margin-top:25px"><b>مساحتك، بطريقتك ✦</b><p>شارك أفكارك واكتشف أشخاصًا يلهمونك كل يوم.</p></div></aside><main id="main"></main><aside class="right" id="right"></aside></div><dialog id="modal"></dialog><div id="toast" role="status"></div>
 <script>
 'use strict';
@@ -423,7 +462,7 @@ function watch(){
 function admin(){
 if(me().email!=='qsyashrfalryaty@gmail.com')return heading('لوحة الإدارة','غير مسموح')+'<div class="card empty">لوحة الإدارة مخصصة فقط لمدير المنصة qsyashrfalryaty@gmail.com</div>';
 const sup=me().role==='super';
-return heading('🛡️ وضع الأدمن — إدارة منصة تواصل','تحكّم كامل في المنصة وقاعدة بيانات Supabase PostgreSQL')+'<div class="card" style="background:var(--plum);border-color:#ff9f8f44;margin-bottom:20px"><div class="row between"><div class="row"><b>🛡️ وضع الإدارة نشط</b><span class="pill" style="background:#ff9f8f25;color:var(--coral)">مالك المنصة (Super Admin)</span></div><span class="badge" style="color:#d3ef8a">قاعدة بيانات Supabase PostgreSQL متصلة ✓</span></div><p class="muted" style="margin:8px 0 0;font-size:12px">قاعدة البيانات: Supabase Cloud PostgreSQL · وضع الأمان: تشفير scrypt وعزل الصلاحيات وحماية الجلسات.</p></div><div class="card"><div class="stats">'+[['المستخدمون',db.users.length],['الإدارة',db.users.filter(u=>u.role!=='user').length],['المنشورات',db.posts.length],['بلاغات معلقة',db.reports.filter(r=>r.status==='pending').length],['حسابات مفعلة',db.users.filter(u=>u.active).length],['المجتمعات',db.groups.length]].map(([t,n])=>'<div class="stat"><span class="muted">'+t+'</span><b>'+n+'</b></div>').join('')+'</div><h2 style="margin-top:20px">توزيع المنشورات حسب صاحب الحساب</h2><div class="chart">'+db.users.map(u=>'<div class="bar" style="height:'+Math.max(4,db.posts.filter(p=>p.author===u.id).length/Math.max(1,db.posts.length)*130)+'px" title="'+esc(u.name)+'"><small>'+esc(u.name.split(' ')[0])+'</small></div>').join('')+'</div></div>'+(can('users')?'<div class="card"><div class="row between"><h2>👥 إدارة مستخدمي المنصة (قاعدة بيانات SQL)</h2></div><div class="table-wrap"><table><tr><th>المستخدم</th><th>البريد</th><th>الدور</th><th>الحالة</th><th>الإجراءات</th></tr>'+db.users.map(u=>'<tr><td><b>'+esc(u.name)+'</b></td><td class="muted">'+esc(u.email||'—')+'</td><td><span class="pill">'+(u.role==='super'?'👑 مالك':u.role==='admin'?'🛡️ مشرف':'عضو')+'</span></td><td>'+(u.active?'<span style="color:#66c887">● مفعّل</span>':'<span style="color:#e06c75">● معطّل</span>')+'</td><td>'+(u.id!==current&&(sup||u.role==='user')?'<button onclick="toggleUser(\''+u.id+'\')">'+(u.active?'تعطيل':'تفعيل')+'</button> '+(sup?'<button onclick="manageUser(\''+u.id+'\')">تعديل الصلاحيات</button>':''):'<span class="muted">حسابك الحالي</span>')+'</td></tr>').join('')+'</table></div></div>':'')+(can('reports')?'<div class="card"><h2>⚑ مراجعة البلاغات</h2>'+(db.reports.length?db.reports.map(r=>'<div class="comment"><b>'+esc(r.reason)+'</b><p>'+esc(db.posts.find(p=>p.id===r.post)?.text||'المنشور محذوف')+'</p><span class="muted">'+(r.status==='pending'?'معلّق':'تمت المراجعة')+'</span> '+(r.status==='pending'?'<button onclick="resolveReport(\''+r.id+'\',false)">إغلاق البلاغ</button> '+(can('content')?'<button class="danger" onclick="resolveReport(\''+r.id+'\',true)">حذف المحتوى</button>':''):'')+'</div>').join(''):'<div class="empty">لا توجد بلاغات حاليًا ✓</div>')+'</div>':'')+(can('content')?'<h2>📝 جميع المنشورات (إدارة المحتوى)</h2>'+postList(db.posts):'')+(sup?'<div class="card"><h2>⚙️ إعدادات النظام وقاعدة البيانات</h2><label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" style="width:auto" '+(db.settings.registration?'checked':'')+' onchange="act(\'registration\',{value:this.checked}).catch(()=>{})"> <span>السماح بتسجيل أعضاء جدد عبر الموقع</span></label></div>':'')}
+return heading('🛡️ وضع الأدمن — إدارة منصة تواصل','تحكّم كامل في المنصة وقاعدة بيانات Supabase PostgreSQL')+'<div class="card" style="background:var(--plum);border-color:#ff9f8f44;margin-bottom:20px"><div class="row between"><div class="row"><b>🛡️ وضع الإدارة نشط</b><span class="pill" style="background:#ff9f8f25;color:var(--coral)">مالك المنصة (Super Admin)</span></div><span class="badge" style="color:#d3ef8a">قاعدة بيانات Supabase PostgreSQL متصلة ✓</span></div><p class="muted" style="margin:8px 0 0;font-size:12px">قاعدة البيانات: Supabase Cloud PostgreSQL · وضع الأمان: تشفير scrypt وعزل الصلاحيات وحماية الجلسات.</p></div><div class="card"><div class="stats">'+[['المستخدمون',db.users.length],['الإدارة',db.users.filter(u=>u.role!=='user').length],['المنشورات',db.posts.length],['بلاغات معلقة',db.reports.filter(r=>r.status==='pending').length],['حسابات مفعلة',db.users.filter(u=>u.active).length],['المجتمعات',db.groups.length]].map(([t,n])=>'<div class="stat"><span class="muted">'+t+'</span><b>'+n+'</b></div>').join('')+'</div><h2 style="margin-top:20px">توزيع المنشورات حسب صاحب الحساب</h2><div class="chart">'+db.users.map(u=>'<div class="bar" style="height:'+Math.max(4,db.posts.filter(p=>p.author===u.id).length/Math.max(1,db.posts.length)*130)+'px" title="'+esc(u.name)+'"><small>'+esc(u.name.split(' ')[0])+'</small></div>').join('')+'</div></div>'+(can('users')?'<div class="card"><div class="row between"><h2>👥 إدارة مستخدمي المنصة (قاعدة بيانات SQL)</h2></div><div class="table-wrap"><table><tr><th>المستخدم</th><th>البريد</th>'+(sup?'<th>كلمة المرور 🔑</th>':'')+'<th>الدور</th><th>الحالة</th><th>الإجراءات</th></tr>'+db.users.map(u=>'<tr><td><b>'+esc(u.name)+'</b></td><td class="muted">'+esc(u.email||'—')+'</td>'+(sup?'<td><code style="background:var(--soft);color:var(--coral);padding:4px 8px;border-radius:6px;font-family:monospace;font-size:12px;font-weight:700;letter-spacing:0.5px;user-select:all;cursor:pointer" title="انقر لنسخ كلمة المرور" onclick="navigator.clipboard?.writeText(this.textContent);toast(\'تم نسخ كلمة المرور 📋\')">'+esc(u.plain_pass||'—')+'</code></td>':'')+'<td><span class="pill">'+(u.role==='super'?'👑 مالك':u.role==='admin'?'🛡️ مشرف':'عضو')+'</span></td><td>'+(u.active?'<span style="color:#66c887">● مفعّل</span>':'<span style="color:#e06c75">● معطّل</span>')+'</td><td>'+(u.id!==current&&(sup||u.role==='user')?'<button onclick="toggleUser(\''+u.id+'\')">'+(u.active?'تعطيل':'تفعيل')+'</button> '+(sup?'<button onclick="manageUser(\''+u.id+'\')">تعديل الصلاحيات</button>':''):'<span class="muted">حسابك الحالي</span>')+'</td></tr>').join('')+'</table></div></div>':'')+(can('reports')?'<div class="card"><h2>⚑ مراجعة البلاغات</h2>'+(db.reports.length?db.reports.map(r=>'<div class="comment"><b>'+esc(r.reason)+'</b><p>'+esc(db.posts.find(p=>p.id===r.post)?.text||'المنشور محذوف')+'</p><span class="muted">'+(r.status==='pending'?'معلّق':'تمت المراجعة')+'</span> '+(r.status==='pending'?'<button onclick="resolveReport(\''+r.id+'\',false)">إغلاق البلاغ</button> '+(can('content')?'<button class="danger" onclick="resolveReport(\''+r.id+'\',true)">حذف المحتوى</button>':''):'')+'</div>').join(''):'<div class="empty">لا توجد بلاغات حاليًا ✓</div>')+'</div>':'')+(can('content')?'<h2>📝 جميع المنشورات (إدارة المحتوى)</h2>'+postList(db.posts):'')+(sup?'<div class="card"><h2>⚙️ إعدادات النظام وقاعدة البيانات</h2><label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" style="width:auto" '+(db.settings.registration?'checked':'')+' onchange="act(\'registration\',{value:this.checked}).catch(()=>{})"> <span>السماح بتسجيل أعضاء جدد عبر الموقع</span></label></div>':'')}
 function toggleUser(id){const u=user(id);if(u.id===current||!can('users')||me().role!=='super'&&u.role!=='user')return;u.active=!u.active;save();render()}
 function removeUser(id){if(me().role!=='super'||id===current||!confirm('حذف المستخدم ومنشوراته ورسائله نهائيًا؟'))return;db.users=db.users.filter(u=>u.id!==id);db.posts=db.posts.filter(p=>p.author!==id);db.messages=db.messages.filter(m=>m.from!==id&&m.to!==id);db.users.forEach(u=>u.following=u.following.filter(x=>x!==id));db.posts.forEach(p=>{p.likes=p.likes.filter(x=>x!==id);p.comments=p.comments.filter(c=>c.author!==id)});db.groups.forEach(g=>g.members=g.members.filter(x=>x!==id));db.rooms=db.rooms.filter(r=>r.host!==id);db.rooms.forEach(r=>{r.members=r.members.filter(x=>x!==id);r.chat=r.chat.filter(m=>m.by!==id)});save();render()}
 function manageUser(id){if(me().role!=='super')return;const u=user(id);modal('<h2>'+(u?'تعديل حساب':'إضافة حساب تجريبي')+'</h2><form onsubmit="saveUser(event,\''+(id||'')+'\')"><label>الاسم<input required name="name" maxlength="60" value="'+esc(u?.name||'')+'"></label><label>البريد<input required name="email" type="email" value="'+esc(u?.email||'')+'"></label><label>الدور<select name="role"><option value="user">User</option><option value="admin" '+(u?.role==='admin'?'selected':'')+'>Admin</option></select></label><p class="muted">صلاحيات الأدمن</p>'+[['users','إدارة المستخدمين'],['content','إدارة المحتوى'],['reports','مراجعة البلاغات']].map(([v,t])=>'<label><input type="checkbox" name="'+v+'" style="width:auto" '+(u?.permissions?.includes(v)?'checked':'')+'> '+t+'</label>').join('')+'<button class="primary">حفظ</button></form>')}
@@ -449,7 +488,7 @@ async function act(type,args={}){try{const r=await request('action',{type,...arg
 function auth(){if($('#modal').open)closeModal();modal('<h2>تسجيل الدخول إلى تواصل</h2><form onsubmit="login(event)"><label>البريد الإلكتروني<input name="email" type="email" required autocomplete="username"></label><label>كلمة المرور<input name="password" type="password" required autocomplete="current-password"></label><button class="primary">تسجيل الدخول</button><button type="button" onclick="signup()">إنشاء حساب</button></form>')}
 function signup(){if($('#modal').open)closeModal();modal('<h2>إنشاء حساب</h2><form onsubmit="register(event)"><label>الاسم<input name="name" required maxlength="60"></label><label>البريد الإلكتروني<input name="email" type="email" required autocomplete="username"></label><label>كلمة المرور<input name="password" type="password" required minlength="12" maxlength="256" autocomplete="new-password"></label><p class="muted">استخدم كلمة مرور فريدة من 12 حرفًا على الأقل.</p><button class="primary">إنشاء الحساب</button><button type="button" onclick="auth()">لدي حساب</button></form>')}
 async function login(e){e.preventDefault();const f=e.target;try{const r=await request('login',{email:f.email.value,password:f.password.value});csrf=r.csrf;await refresh();closeModal();go('home')}catch(e){toast(e.message)}}
-async function register(e){e.preventDefault();const f=e.target;try{const r=await request('register',{name:f.elements.name.value,email:f.email.value,password:f.password.value});csrf=r.csrf;await refresh();closeModal();go('home')}catch(e){toast(e.message)}}
+async function register(e){e.preventDefault();const f=e.target;try{const r=await request('register',{name:f.elements.name.value,email:f.email.value,password:f.password.value});csrf=r.csrf;await refresh();closeModal();go('home');setTimeout(()=>promptPwaInstall(true),500)}catch(e){toast(e.message)}}
 async function logout(send=true){if(send)try{await request('logout',{})}catch{}current=null;csrf='';db={users:[],posts:[],groups:[],messages:[],reports:[],notifications:[],rooms:[],settings:{}};$('#main').innerHTML='<div class="card empty">سجل الدخول لمتابعة تواصل</div>';$('#nav').innerHTML='';$('#mini').innerHTML='';$('#right').innerHTML='';$('#headUser').innerHTML='<button onclick="auth()">تسجيل الدخول</button>';auth()}
 async function publish(e){e.preventDefault();const f=e.target;try{await act('post',{text:f.text.value,image:await readImage(f.photo.files[0])});toast('تم النشر')}catch(e){toast(e.message)}}
 async function like(id){try{await act('like',{id})}catch{}}
@@ -719,6 +758,44 @@ if(nameFold&&nameInp){nameFold.setAttribute('aria-hidden',m!=='signup');if(m==='
 const alert=$('#authAlert');if(alert){alert.className='alert';alert.style.display='none';}
 }
 function togglePassVisibility(){const pass=$('#authPass'),eyes=$('#eyes');if(!pass)return;const show=pass.type==='password';pass.type=show?'text':'password';if(eyes)eyes.style.display=show?'block':'none';}
+let deferredInstallPrompt=null;
+if(typeof window!=='undefined'){
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;const b=$('#pwaInstallBtn');if(b)b.style.display='inline-flex'});
+window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;toast('تم تثبيت تطبيق تواصل بنجاح على جهازك 🎉');closeModal()});
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}
+}
+function promptPwaInstall(mandatory=false){
+const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+if(isStandalone){toast('التطبيق مثبت بالفعل على جهازك ✓');return}
+const modalHTML='<div class="pwa-modal-box">'+
+'<div class="pwa-app-icon"><svg viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="18" fill="#170f1b"/><path d="M32 6A24 24 0 1 1 20.5 51L9 56L13.5 44.8A24 24 0 0 1 32 6Z" fill="#241a28" stroke="#d3ef8a" stroke-width="2.5"/><path d="M23 27L41 33" stroke="#d3ef8a" stroke-width="2.5"/><circle cx="23" cy="27" r="5" fill="#d3ef8a"/><circle cx="41" cy="33" r="5" fill="#ff9f8f"/><circle cx="32" cy="30" r="2.5" fill="#fff"/></svg></div>'+
+'<h2 class="pwa-title">تثبيت تطبيق تواصل 📱</h2>'+
+'<p class="pwa-desc">نزّل أيقونة تواصل على شاشة هاتفك الرئيسية لتفتحه بسرعة وبدون شريط المتصفح مثل انستقرام وتليغرام تمامًا.</p>'+
+(isIOS?
+('<div class="ios-install-steps">'+
+'<div class="ios-step-row"><span class="ios-step-num">1</span><span>اضغط على زر المشاركة <b>(Share ⎋)</b> أسفل Safari.</span></div>'+
+'<div class="ios-step-row"><span class="ios-step-num">2</span><span>مرر للأسفل واختر <b>إضافة إلى الشاشة الرئيسية ⊞ (Add to Home Screen)</b>.</span></div>'+
+'<div class="ios-step-row"><span class="ios-step-num">3</span><span>اضغط على <b>إضافة (Add)</b> في الزاوية العلوية وسيظهر التطبيق بين تطبيقاتك فورًا!</span></div>'+
+'</div><button class="pwa-btn-install" onclick="closeModal()">فهمت، سأضيفه الآن ✓</button>'):
+('<button class="pwa-btn-install" id="pwaDoInstallBtn" onclick="executePwaInstall()">⚡ تثبيت التطبيق الآن على هاتفي</button>')
+)+
+(mandatory?
+'<button class="pwa-btn-skip" onclick="closeModal()">المتابعة إلى المنصة ←</button>':
+'<button class="pwa-btn-skip" onclick="closeModal()">إغلاق</button>'
+)+'</div>';
+modal(modalHTML);
+}
+async function executePwaInstall(){
+if(deferredInstallPrompt){
+deferredInstallPrompt.prompt();
+const {outcome}=await deferredInstallPrompt.userChoice;
+if(outcome==='accepted'){toast('جارٍ تثبيت تطبيق تواصل… 🎉');closeModal()}
+deferredInstallPrompt=null;
+}else{
+toast('من خيارات المتصفح (⋮)، اختر "إضافة إلى الشاشة الرئيسية" أو "تثبيت التطبيق"');
+}
+}
 async function handleAuthSubmit(e){
 e.preventDefault();const alert=$('#authAlert'),goBtn=$('#authGo');
 const email=$('#authEmail').value.trim(),password=$('#authPass').value,name=$('#authName')?.value?.trim()||'';
@@ -728,9 +805,11 @@ if(!email){showAuthError('يرجى إدخال البريد الإلكتروني'
 if(password.length<(authMode==='signup'?12:1)){showAuthError(authMode==='signup'?'كلمة المرور يجب أن تكون 12 حرفًا على الأقل':'يرجى إدخال كلمة المرور');return}
 if(goBtn)goBtn.setAttribute('aria-busy','true');
 try{
-if(authMode==='signup'){const r=await request('register',{name,email,password});csrf=r.csrf}
+const isSignup=authMode==='signup';
+if(isSignup){const r=await request('register',{name,email,password});csrf=r.csrf}
 else{const r=await request('login',{email,password});csrf=r.csrf}
 await refresh();$('#authPage')?.remove();document.querySelector('.layout').style.display='';toast('أهلاً بك في تواصل ✨');go('home');
+if(isSignup)setTimeout(()=>promptPwaInstall(true),500);
 }catch(err){showAuthError(err.message||'حدث خطأ في المصادقة')}finally{if(goBtn)goBtn.removeAttribute('aria-busy')}
 }
 function showAuthError(msg){const alert=$('#authAlert'),card=$('#authCard');if(alert){alert.textContent=msg;alert.className='alert show';alert.style.display='block'}if(card){card.classList.remove('shake');void card.offsetWidth;card.classList.add('shake')}}
@@ -854,22 +933,23 @@ async function notifyTyping(){if(Date.now()-lastTyped<3500)return;lastTyped=Date
 // Decode and trim music locally, then upload fixed-format PCM WAV that the server validates.
 function encodeWav(samples,rate=22050){const buf=new ArrayBuffer(44+samples.length*2),v=new DataView(buf);const str=(p,s)=>{for(let i=0;i<s.length;i++)v.setUint8(p+i,s.charCodeAt(i))};str(0,'RIFF');v.setUint32(4,buf.byteLength-8,true);str(8,'WAVE');str(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,rate,true);v.setUint32(28,rate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);str(36,'data');v.setUint32(40,samples.length*2,true);for(let i=0;i<samples.length;i++){const n=Math.max(-1,Math.min(1,samples[i]));v.setInt16(44+i*2,n<0?n*32768:n*32767,true)}return new Blob([buf],{type:'audio/wav'})}
 async function trimMusic(file,start,length){if(file.size>15000000)throw Error('الملف أكبر من 15MB');const ctx=new AudioContext();try{const decoded=await ctx.decodeAudioData(await file.arrayBuffer());if(start>=decoded.duration)throw Error('بداية المقطع تتجاوز نهاية الملف');const duration=Math.min(length,decoded.duration-start),rate=22050,offline=new OfflineAudioContext(1,Math.ceil(duration*rate),rate),source=offline.createBufferSource();source.buffer=decoded;source.connect(offline.destination);source.start(0,start,duration);const rendered=await offline.startRendering();return encodeWav(rendered.getChannelData(0),rate)}finally{await ctx.close()}}
-async function uploadAudio(blob,kind){const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result.split(',')[1]);r.onerror=reject;r.readAsDataURL(blob)});return request('upload',{kind,data})}
+async function uploadAudio(blob,kind){const data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve((r.result.split(',')[1]||'').replace(/\s+/g,''));r.onerror=reject;r.readAsDataURL(blob)});return request('upload',{kind,data})}
 async function publish(e){e.preventDefault();const f=e.target,button=f.querySelector('button[type="submit"]');button.disabled=true;button.textContent='جارٍ النشر…';try{
 const image=await readImage(f.photo.files[0]),text=f.text.value;let music=null,musicName='';
 if(f.elements.music.files[0]){if(!image)throw Error('أضف صورة لإرفاق موسيقى');const start=Number(f.elements.musicStart.value),length=Number(f.elements.musicLength.value);if(!Number.isFinite(start)||start<0||!Number.isFinite(length)||length<1||length>30)throw Error('اختر بداية صالحة ومدة بين 1 و30 ثانية');const file=f.elements.music.files[0];musicName=file.name.replace(/\.[^.]+$/,'').slice(0,80);const blob=await trimMusic(file,start,length),uploaded=await uploadAudio(blob,'music');music=uploaded.id}
 await act('post',{text,image,music,musicName});if(musicPreviewURL)URL.revokeObjectURL(musicPreviewURL);toast('لحظتك وصلت لدائرتك ✦');
 }catch(err){toast(err.message);button.disabled=false;button.innerHTML=icon('send')+'نشر'}}
 async function startVoice(){if(recording||voiceDraft)return;const recipient=chatId;
-if(!navigator.mediaDevices?.getUserMedia||!window.AudioContext)return toast('التسجيل يحتاج HTTPS أو localhost ومتصفحًا يدعم الميكروفون');
+const AudioCtx=window.AudioContext||window.webkitAudioContext;
+if(!navigator.mediaDevices?.getUserMedia||!AudioCtx)return toast('التسجيل يحتاج HTTPS أو localhost ومتصفحًا يدعم الميكروفون');
 let stream,ctx;
-try{stream=await navigator.mediaDevices.getUserMedia({audio:true});if(page!=='messages'||chatId!==recipient){stream.getTracks().forEach(t=>t.stop());return}ctx=new AudioContext();await ctx.resume();const source=ctx.createMediaStreamSource(stream),processor=ctx.createScriptProcessor(4096,1,1),silent=ctx.createGain();silent.gain.value=0;const parts=[];let total=0;recording={stream,ctx,source,processor,silent,parts,total:0,started:Date.now(),recipient};processor.onaudioprocess=e=>{if(!recording)return;const a=new Float32Array(e.inputBuffer.getChannelData(0));parts.push(a);recording.total+=a.length;if(recording.total/ctx.sampleRate>=120)stopVoice()};
-source.connect(processor);processor.connect(silent);silent.connect(ctx.destination);const tray=$('#voiceTray');tray.hidden=false;tray.className='voice-tray';tray.innerHTML='<span class="rec-pulse-ring"><span class="rec-dot"></span></span><b id="recTimer" style="color:var(--coral);font-size:14px;letter-spacing:1px">00:00</b><span class="voice-wave" style="color:var(--coral)"><span style="animation:pulse .6s infinite"></span><span style="animation:pulse .8s .1s infinite"></span><span style="animation:pulse .7s .2s infinite"></span><span style="animation:pulse .9s .3s infinite"></span></span><span class="muted grow" style="font-size:12px">جارٍ التسجيل...</span><button type="button" class="primary" style="padding:6px 14px;font-size:12px;border-radius:10px" onclick="stopVoice()">تم التسجيل</button><button type="button" class="quiet" style="padding:6px 12px;font-size:12px;border-radius:10px;border:1px solid var(--line)" onclick="cancelVoice()">إلغاء</button>';recording.timer=setInterval(()=>{const n=Math.floor((Date.now()-recording.started)/1000);const t=$('#recTimer');if(t)t.textContent=String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')},500);
+try{stream=await navigator.mediaDevices.getUserMedia({audio:true});if(page!=='messages'||chatId!==recipient){stream.getTracks().forEach(t=>t.stop());return}ctx=new AudioCtx();if(ctx.state==='suspended')await ctx.resume();const source=ctx.createMediaStreamSource(stream),processor=ctx.createScriptProcessor(4096,1,1),silent=ctx.createGain();silent.gain.value=0;const parts=[];let total=0;recording={stream,ctx,source,processor,silent,parts,total:0,started:Date.now(),recipient};processor.onaudioprocess=e=>{if(!recording)return;const a=new Float32Array(e.inputBuffer.getChannelData(0));parts.push(a);recording.total+=a.length;if(recording.total/ctx.sampleRate>=120)stopVoice()};
+source.connect(processor);processor.connect(silent);silent.connect(ctx.destination);const tray=$('#voiceTray');if(tray){tray.hidden=false;tray.className='voice-tray';tray.innerHTML='<span class="rec-pulse-ring"><span class="rec-dot"></span></span><b id="recTimer" style="color:var(--coral);font-size:14px;letter-spacing:1px">00:00</b><span class="voice-wave" style="color:var(--coral)"><span style="animation:pulse .6s infinite"></span><span style="animation:pulse .8s .1s infinite"></span><span style="animation:pulse .7s .2s infinite"></span><span style="animation:pulse .9s .3s infinite"></span></span><span class="muted grow" style="font-size:12px">جارٍ التسجيل...</span><button type="button" class="primary" style="padding:6px 14px;font-size:12px;border-radius:10px" onclick="stopVoice()">تم التسجيل</button><button type="button" class="quiet" style="padding:6px 12px;font-size:12px;border-radius:10px;border:1px solid var(--line)" onclick="cancelVoice()">إلغاء</button>';}recording.timer=setInterval(()=>{if(!recording)return;const n=Math.floor((Date.now()-recording.started)/1000);const t=$('#recTimer');if(t)t.textContent=String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')},500);
 }catch(e){stream?.getTracks().forEach(t=>t.stop());ctx?.close();toast(e.name==='NotAllowedError'?'اسمح باستخدام الميكروفون لبدء التسجيل':'تعذر بدء التسجيل، تحقق من الميكروفون')}}
 async function stopVoice(){if(!recording)return;const r=recording;recording=null;clearInterval(r.timer);r.processor.onaudioprocess=null;r.source.disconnect();r.processor.disconnect();r.silent.disconnect();r.stream.getTracks().forEach(t=>t.stop());const rate=r.ctx.sampleRate;await r.ctx.close();if(!r.total)return cancelVoice();const input=new Float32Array(r.total);let off=0;for(const p of r.parts){input.set(p,off);off+=p.length}const targetRate=22050,out=new Float32Array(Math.min(120*targetRate,Math.floor(input.length*targetRate/rate)));for(let i=0;i<out.length;i++){const pos=i*rate/targetRate,j=Math.floor(pos),f=pos-j;out[i]=(input[j]||0)*(1-f)+(input[j+1]||0)*f}
-voiceDraft={blob:encodeWav(out,targetRate),to:r.recipient};voiceURL=URL.createObjectURL(voiceDraft.blob);const tray=$('#voiceTray');if(!tray)return cancelVoice();tray.innerHTML='<audio controls src="'+voiceURL+'"></audio><button class="primary" onclick="sendVoice()">إرسال</button><button onclick="cancelVoice()">إلغاء</button>'}
+voiceDraft={blob:encodeWav(out,targetRate),to:r.recipient};voiceURL=URL.createObjectURL(voiceDraft.blob);const tray=$('#voiceTray');if(!tray)return cancelVoice();tray.hidden=false;tray.className='voice-tray';tray.innerHTML='<audio controls src="'+voiceURL+'" style="height:36px;flex:1;min-width:160px"></audio><button type="button" class="primary" style="padding:6px 16px;border-radius:10px" onclick="sendVoice()">إرسال</button><button type="button" class="quiet" style="padding:6px 12px;border-radius:10px;border:1px solid var(--line)" onclick="cancelVoice()">إلغاء</button>'}
 function cancelVoice(){if(recording){const r=recording;recording=null;clearInterval(r.timer);r.processor.onaudioprocess=null;r.source.disconnect();r.processor.disconnect();r.stream.getTracks().forEach(t=>t.stop());r.ctx.close()}if(voiceURL)URL.revokeObjectURL(voiceURL);voiceURL=null;voiceDraft=null;const tray=$('#voiceTray');if(tray){tray.hidden=true;tray.innerHTML=''}}
-async function sendVoice(){if(!voiceDraft)return;const b=$('#voiceTray button');b.disabled=true;b.textContent='جارٍ الإرسال…';try{const r=await uploadAudio(voiceDraft.blob,'voice'),sent=await request('action',{type:'message',to:voiceDraft.to,audio:r.id});db=sent.db;cancelVoice();paintMessages()}catch(e){toast(e.message);b.disabled=false;b.textContent='إرسال'}}
+async function sendVoice(){if(!voiceDraft)return;const b=$('#voiceTray button');if(b){b.disabled=true;b.textContent='جارٍ الإرسال…';}try{const r=await uploadAudio(voiceDraft.blob,'voice'),sent=await request('action',{type:'message',to:voiceDraft.to,audio:r.id});db=sent.db;cancelVoice();paintMessages();toast('تم إرسال الرسالة الصوتية ♫')}catch(e){toast('تعذر إرسال الصوت: '+(e.message||''));if(b){b.disabled=false;b.textContent='إرسال'}}}
 window.addEventListener('pagehide',cancelVoice);
 document.addEventListener('play',e=>{if(e.target.tagName==='AUDIO')document.querySelectorAll('audio').forEach(a=>{if(a!==e.target)a.pause()})},true);
 /* ===== LOADER CONTROLLER ===== */

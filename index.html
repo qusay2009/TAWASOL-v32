@@ -351,12 +351,63 @@ function joinGroup(id){const g=db.groups.find(g=>g.id===id);g.members=g.members.
 function deleteGroup(id){if(me().role!=='super'||!confirm('حذف المجتمع؟'))return;db.groups=db.groups.filter(g=>g.id!==id);save();render()}
 function newGroup(){modal('<h2>مجتمع جديد</h2><form onsubmit="event.preventDefault();db.groups.push({id:uid(),name:this.elements.name.value,desc:this.desc.value,icon:\'✦\',members:[current]});save();closeModal();render()"><label>اسم المجتمع<input name="name" required maxlength="70"></label><label>وصفه<input name="desc" required maxlength="180"></label><button class="primary">إنشاء المجتمع</button></form>')}
 function search(){const q=query.trim().toLowerCase();return heading('استكشف تواصل','الأفكار والأشخاص الأقرب لاهتماماتك')+'<form class="row card" onsubmit="event.preventDefault();query=this.q.value;render()"><input name="q" value="'+esc(query)+'" placeholder="ابحث هنا…"><button class="primary">بحث</button></form>'+(q?'<h2>الأشخاص</h2><div class="card">'+(db.users.filter(u=>u.active&&u.name.toLowerCase().includes(q)&&u.id!==current).map(person).join('')||'<p class="muted">لا توجد حسابات مطابقة</p>')+'</div><h2>المنشورات</h2>'+postList(db.posts.filter(p=>p.text.toLowerCase().includes(q))):'<div class="card empty">اكتب كلمة وابدأ الاكتشاف ⌕</div>')}
-function watch(){const r=db.rooms.find(r=>r.id===roomId);return heading('شاهدوا اللحظة معًا','غرف يوتيوب خاصة، من شخص إلى خمسة أشخاص')+'<div class="notice">الغرف والدردشة محفوظة على الخادم. تحديث الرسائل كل 5 ثوانٍ؛ مزامنة توقيت تشغيل الفيديو لم تُفعّل بعد.</div>'+(!r?'<div class="card"><h2>ليلة فيديو مع الأصدقاء 🍿</h2><p class="muted">أنشئ غرفة أو انضم لغرفة موجودة.</p><button class="primary" onclick="createRoom()">+ إنشاء غرفة</button></div>'+db.rooms.map(r=>'<div class="card row"><div class="grow"><b>'+esc(r.name)+'</b><div class="muted">'+r.members.length+' / 5 مشاركين</div></div><button onclick="enterRoom(\''+r.id+'\')" class="primary">دخول الغرفة</button></div>').join(''):'<div class="card"><div class="row between"><h2>'+esc(r.name)+'</h2><button onclick="leaveRoom()">مغادرة</button></div><div class="watch-room"><div class="watch-video"><div class="watch-screen">'+(r.video?'<iframe src="https://www.youtube-nocookie.com/embed/'+esc(r.video)+'" title="مشغل يوتيوب" allow="encrypted-media; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>':'<p>▷ أضف رابط فيديو لبدء المشاهدة</p>')+'</div>'+(r.host===current?'<form class="row" style="margin-top:16px" onsubmit="setVideo(event)"><input name="url" type="url" required placeholder="https://www.youtube.com/watch?v=…"><button class="primary">عرض الفيديو</button></form>':'<p class="muted">المضيف يختار الفيديو. استخدم مشغل يوتيوب للتحكم بالمشاهدة المحلية.</p>')+'</div><div class="watch-chat"><h3>المشاركون · '+r.members.length+'/5</h3><p>'+r.members.map(id=>esc(user(id)?.name||'مستخدم')).join(' ، ')+'</p><h3>دردشة الغرفة</h3><div class="chatlog">'+(r.chat.map(m=>'<p class="comment"><b>'+esc(user(m.by)?.name)+'</b> '+esc(m.text)+'</p>').join('')||'<p class="muted">قل مرحبًا لأصدقائك 👋</p>')+'</div><form class="row" onsubmit="roomMessage(event)"><input name="text" required maxlength="1000" placeholder="شارك انطباعك…"><button class="primary">إرسال</button></form></div></div></div>')}
-function createRoom(){modal('<h2>غرفة مشاهدة جديدة</h2><form onsubmit="event.preventDefault();const r={id:uid(),name:this.elements.name.value,host:current,members:[current],video:\'\',chat:[]};db.rooms.push(r);roomId=r.id;save();closeModal();render()"><input name="name" required maxlength="60" placeholder="اسم الغرفة"><button class="primary">إنشاء</button></form>')}
-function enterRoom(id){const r=db.rooms.find(r=>r.id===id);if(!r.members.includes(current)){if(r.members.length>=5)return toast('الغرفة مكتملة، الحد الأقصى 5 أشخاص');r.members.push(current)}roomId=id;save();render()}
-function leaveRoom(){const r=db.rooms.find(r=>r.id===roomId);r.members=r.members.filter(x=>x!==current);if(!r.members.length)db.rooms=db.rooms.filter(x=>x.id!==r.id);else if(r.host===current)r.host=r.members[0];roomId=null;save();render()}
-function setVideo(e){e.preventDefault();const r=db.rooms.find(r=>r.id===roomId);if(r.host!==current)return;try{const u=new URL(e.target.url.value);let id;if(u.hostname==='youtu.be')id=u.pathname.slice(1);else if(['youtube.com','www.youtube.com','m.youtube.com'].includes(u.hostname))id=u.searchParams.get('v')||u.pathname.match(/^\/(?:shorts|embed)\/([\w-]+)/)?.[1];if(!/^[\w-]{11}$/.test(id||''))throw Error();r.video=id;save();render()}catch{toast('أدخل رابط فيديو يوتيوب صالحًا')}}
-function roomMessage(e){e.preventDefault();const r=db.rooms.find(r=>r.id===roomId);if(!r.members.includes(current)||!e.target.text.value.trim())return;r.chat.push({by:current,text:e.target.text.value.trim()});save();render()}
+function watch(){
+  const r=db.rooms.find(r=>r.id===roomId);
+  const isAdmin=me().role==='super'||me().role==='admin'||can('content');
+  if(!r){
+    const roomsList=db.rooms.length?db.rooms.map(rm=>{
+      const isMember=(rm.members||[]).includes(current);
+      const isFull=(rm.members||[]).length>=5;
+      const lockedPill=rm.hasPassword
+        ?'<span class="pill" style="background:#fff2e8;color:#d4380d;border:1px solid #ffbb9677;display:inline-flex;align-items:center;gap:4px">🔒 محمية بكلمة سر</span>'
+        :'<span class="pill" style="background:var(--soft);color:var(--blue);display:inline-flex;align-items:center;gap:4px">🌐 عامة</span>';
+      const adminDeleteBtn=isAdmin
+        ?'<button class="danger" style="padding:6px 12px;font-size:12px;margin-left:8px" onclick="deleteRoomAdmin(\''+rm.id+'\',\''+esc(rm.name)+'\')">🗑️ حذف (أدمن)</button>'
+        :'';
+      const enterBtn='<button onclick="enterRoomWithCheck(\''+rm.id+'\','+Boolean(rm.hasPassword)+','+isMember+')" class="primary" style="padding:7px 16px">'+(isMember?'عودة للغرفة':(isFull?'الغرفة ممتلئة':'دخول الغرفة'))+'</button>';
+      return '<div class="card row between" style="align-items:center;gap:12px"><div class="grow"><div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><b style="font-size:15px">'+esc(rm.name)+'</b>'+lockedPill+'</div><div class="muted" style="margin-top:5px;font-size:12px">👥 '+(rm.members||[]).length+' / 5 مشاركين · المضيف: '+esc(user(rm.host)?.name||'عضو')+'</div></div><div class="row" style="gap:8px;flex-shrink:0">'+adminDeleteBtn+enterBtn+'</div></div>';
+    }).join(''):'<div class="card empty" style="padding:35px 20px"><div style="font-size:36px;margin-bottom:10px">🎬</div>لا توجد غرف مشاهدة نشطة حاليًا.<br><span class="muted">كن أول من ينشئ غرفة وادعُ أصدقاءك للمشاهدة معًا!</span></div>';
+
+    return heading('شاهدوا اللحظة معًا 🍿','غرف يوتيوب خاصة وعامة مع دردشة حية')+
+      '<div class="notice" style="background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:20px;font-size:13px">✨ <b>غرفة المشاهدة:</b> يمكنك حماية غرفتك بكلمة سر لمنع المتطفلين، أو تركها عامة. المشاهدة تتسع حتى 5 مشاركين.</div>'+
+      '<div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;margin-bottom:20px"><div><h2 style="margin:0 0 5px">ليلة سينما مع الأصدقاء 🎬</h2><p class="muted" style="margin:0">أنشئ غرفة محمية بكلمة سر أو شارك في الغرف المتاحة.</p></div><button class="primary" style="padding:10px 20px;font-weight:600" onclick="createRoom()">+ إنشاء غرفة جديدة</button></div>'+
+      '<h2 style="margin:20px 0 12px">الغرف النشطة حاليًا ('+db.rooms.length+')</h2>'+roomsList;
+  }
+
+  const hostUser=user(r.host);
+  return '<div class="card">'+
+    '<div class="row between" style="align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--line)">'+
+      '<div class="row" style="gap:10px;align-items:center"><h2 style="margin:0;font-size:19px">'+esc(r.name)+'</h2>'+(r.hasPassword?'<span class="pill" style="background:#fff2e8;color:#d4380d;border:1px solid #ffbb9677">🔒 غرفة خاصة</span>':'<span class="pill">🌐 غرفة عامة</span>')+'</div>'+
+      '<div class="row" style="gap:8px">'+
+        (isAdmin?'<button class="danger" style="padding:7px 14px;font-size:12px" onclick="deleteRoomAdmin(\''+r.id+'\',\''+esc(r.name)+'\')">🗑️ حذف كأدمن</button>':'')+
+        '<button class="quiet" style="border:1px solid var(--line);padding:7px 16px" onclick="leaveRoom()">🚪 مغادرة الغرفة</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="watch-room">'+
+      '<div class="watch-video">'+
+        '<div class="watch-screen">'+
+          (r.video?'<iframe src="https://www.youtube-nocookie.com/embed/'+esc(r.video)+'?autoplay=1" title="مشغل يوتيوب" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>':'<div style="display:grid;place-items:center;height:100%;color:var(--muted);text-align:center;padding:40px"><div><div style="font-size:42px;margin-bottom:10px">📺</div><b>بانتظار اختيار الفيديو</b><p style="font-size:12px;margin:5px 0 0">ضع رابط فيديو يوتيوب في الخانة أدناه لبدء المشاهدة</p></div></div>')+
+        '</div>'+
+        (r.host===current?
+          '<form class="row" style="margin-top:16px;gap:10px" onsubmit="setVideo(event)"><input name="url" type="url" required placeholder="https://www.youtube.com/watch?v=… أو رابط YouTu.be" style="flex:1"><button class="primary" style="white-space:nowrap;padding:10px 18px">▶ عرض الفيديو</button></form>':
+          '<p class="muted" style="margin-top:12px;font-size:12px">👑 المضيف (<b>'+esc(hostUser?.name||'صاحب الغرفة')+'</b>) هو من يختار الفيديو للمجموعة.</p>'
+        )+
+      '</div>'+
+      '<div class="watch-chat">'+
+        '<div class="row between" style="align-items:center;margin-bottom:10px"><h3 style="margin:0">المشاركون ('+(r.members||[]).length+'/5)</h3></div>'+
+        '<div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:14px">'+
+          (r.members||[]).map(id=>{const u=user(id);const isH=id===r.host;return '<span class="pill" style="font-size:11px;'+(isH?'background:var(--plum);color:var(--coral);font-weight:bold':'')+'">'+(isH?'👑 ':'')+esc(u?.name||'مستخدم')+'</span>'}).join('')+
+        '</div>'+
+        '<div class="divider" style="margin:10px 0"></div>'+
+        '<h3 style="margin:0 0 10px">💬 دردشة الغرفة</h3>'+
+        '<div class="chatlog" style="height:250px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px">'+
+          (((r.chat||[]).map(m=>'<div class="comment" style="margin:0;padding:8px 12px"><b style="color:var(--blue)">'+esc(user(m.by)?.name||'عضو')+':</b> '+esc(m.text)+'</div>').join(''))||'<p class="muted" style="text-align:center;margin:auto">قل مرحبًا لأصدقائك في الغرفة 👋</p>')+
+        '</div>'+
+        '<form class="row" style="margin-top:12px;gap:8px" onsubmit="roomMessage(event)"><input name="text" required maxlength="1000" placeholder="اكتب رسالة للغرفة…" style="flex:1"><button class="primary" style="padding:9px 16px">إرسال</button></form>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+}
 function admin(){
 if(me().email!=='qsyashrfalryaty@gmail.com')return heading('لوحة الإدارة','غير مسموح')+'<div class="card empty">لوحة الإدارة مخصصة فقط لمدير المنصة qsyashrfalryaty@gmail.com</div>';
 const sup=me().role==='super';
@@ -409,8 +460,85 @@ async function toggleUser(id){try{await act('toggleUser',{id})}catch{}}
 function removeUser(){toast('الحذف النهائي للحسابات غير مفعّل؛ يمكنك تعطيل الحساب وإبطال جلساته')}
 function manageUser(id){const u=user(id);if(!u)return toast('ينشئ المستخدم حسابه أولًا، ثم يمكنك تعيينه أدمن');modal('<h2>إدارة الحساب</h2><form onsubmit="saveUser(event,\''+id+'\')"><label>الاسم<input name="name" required value="'+esc(u.name)+'"></label><label>الدور<select name="role"><option value="user">User</option><option value="admin" '+(u.role==='admin'?'selected':'')+'>Admin</option></select></label>'+['users','content','reports'].map(p=>'<label><input style="width:auto" type="checkbox" name="'+p+'" '+(u.permissions?.includes(p)?'checked':'')+'>'+p+'</label>').join('')+'<button class="primary">حفظ</button></form>')}
 async function saveUser(e,id){e.preventDefault();const f=e.target;try{await act('user',{id,name:f.elements.name.value,role:f.role.value,permissions:['users','content','reports'].filter(p=>f[p].checked)});closeModal()}catch{}}
-function createRoom(){modal('<h2>غرفة جديدة</h2><form onsubmit="event.preventDefault();act(\'room\',{name:this.elements.name.value}).then(r=>{roomId=r.result;closeModal();render()}).catch(()=>{})"><input name="name" required maxlength="60" placeholder="اسم الغرفة"><button class="primary">إنشاء</button></form>')}
-async function enterRoom(id){try{await act('enterRoom',{id});roomId=id;render()}catch{}}
+function createRoom(){
+  modal('<h2>غرفة مشاهدة جديدة 🍿</h2>'+
+    '<p class="muted" style="margin-bottom:16px">شاهدوا يوتيوب معًا في الوقت الفعلي مع أصدقائك.</p>'+
+    '<form onsubmit="handleCreateRoom(event)">'+
+      '<label>اسم الغرفة *<input name="name" required maxlength="60" placeholder="مثال: سهرة أفلام، بودكاست..." autofocus></label>'+
+      '<label style="margin-top:12px">كلمة المرور (لحماية الغرفة 🔒)<input name="password" type="password" maxlength="50" placeholder="اتركها فارغة إذا أردت الغرفة عامة للجميع"></label>'+
+      '<div class="hint" style="margin:12px 0 16px;font-size:12px;background:var(--soft);padding:10px;border-radius:10px">'+
+        '🔒 <b>حماية الخصوصية:</b> إذا وضعت كلمة مرور، فلن يستطيع أي شخص الدخول للغرفة إلا بعد إدخال كلمة المرور.'+
+      '</div>'+
+      '<div class="row" style="justify-content:flex-end;gap:10px">'+
+        '<button type="button" class="quiet" onclick="closeModal()">إلغاء</button>'+
+        '<button class="primary" style="padding:9px 20px">إنشاء الغرفة</button>'+
+      '</div>'+
+    '</form>');
+}
+
+async function handleCreateRoom(e){
+  e.preventDefault();
+  const f=e.target;
+  const name=f.elements.name.value.trim();
+  const password=f.elements.password.value.trim()||undefined;
+  if(!name)return;
+  try{
+    const res=await act('room',{name,password});
+    roomId=res.result;
+    closeModal();
+    render();
+    toast(password?'تم إنشاء الغرفة المحمية بنجاح 🔒':'تم إنشاء الغرفة بنجاح 🎬');
+  }catch(err){toast(err.message||'تعذر إنشاء الغرفة')}
+}
+
+async function enterRoomWithCheck(id,hasPassword,isMember){
+  if(isMember||!hasPassword){
+    try{
+      await act('enterRoom',{id});
+      roomId=id;
+      render();
+    }catch(e){toast(e.message||'تعذر دخول الغرفة')}
+    return;
+  }
+  modal('<h2>غرفة محمية بكلمة سر 🔒</h2>'+
+    '<p class="muted" style="margin-bottom:16px">هذه الغرفة خاصة ولا يمكن الدخول إليها إلا بإدخال كلمة السر.</p>'+
+    '<form onsubmit="handleEnterWithPassword(event,\''+id+'\')">'+
+      '<label>كلمة سر الغرفة<input name="password" type="password" required autofocus placeholder="أدخل كلمة سر الغرفة"></label>'+
+      '<div class="row" style="justify-content:flex-end;gap:10px;margin-top:16px">'+
+        '<button type="button" class="quiet" onclick="closeModal()">إلغاء</button>'+
+        '<button class="primary" style="padding:9px 20px">انضمام الآن</button>'+
+      '</div>'+
+    '</form>');
+}
+
+async function handleEnterWithPassword(e,id){
+  e.preventDefault();
+  const pw=e.target.password.value.trim();
+  if(!pw)return;
+  try{
+    await act('enterRoom',{id,password:pw});
+    roomId=id;
+    closeModal();
+    render();
+    toast('أهلاً بك في الغرفة 🍿');
+  }catch(e){toast(e.message||'كلمة المرور غير صحيحة 🔒')}
+}
+
+async function enterRoom(id){
+  const r=db.rooms.find(x=>x.id===id);
+  enterRoomWithCheck(id,Boolean(r?.hasPassword),(r?.members||[]).includes(current));
+}
+
+async function deleteRoomAdmin(id,name){
+  if(!confirm('⚠️ تأكيد كمسؤول:\nهل أنت متأكد من حذف غرفة "'+name+'" نهائيًا؟'))return;
+  try{
+    await act('deleteRoom',{id});
+    if(roomId===id)roomId=null;
+    render();
+    toast('تم حذف الغرفة كمسؤول بنجاح 🗑️');
+  }catch(e){toast(e.message||'تعذر حذف الغرفة')}
+}
+
 async function leaveRoom(){try{await act('leaveRoom',{id:roomId});roomId=null;render()}catch{}}
 async function setVideo(e){e.preventDefault();try{const u=new URL(e.target.url.value);const video=u.hostname==='youtu.be'?u.pathname.slice(1):['youtube.com','www.youtube.com','m.youtube.com'].includes(u.hostname)?u.searchParams.get('v')||u.pathname.match(/^\/(?:shorts|embed)\/([\w-]+)/)?.[1]:'';await act('video',{id:roomId,video})}catch{toast('تعذر عرض الفيديو، تحقق من الرابط والصلاحيات')}}
 function settings(){return heading('الإعدادات والأمان','الحسابات والبيانات محفوظة على الخادم')+'<div class="card"><h2>حسابك</h2><p>'+esc(me().email)+'</p><button onclick="editProfile()">تعديل الملف</button><button onclick="logout()" class="danger">تسجيل الخروج</button><div class="divider"></div><button onclick="theme()">تبديل المظهر</button><button onclick="exportData()">تنزيل بياناتي</button><p class="muted">الجلسة بكوكي HttpOnly، وكلمات المرور مجزأة بخوارزمية scrypt. الصلاحيات تُفحص في الخادم.</p></div>'}
@@ -788,20 +916,22 @@ function loaderLoop(){
   loaderTick=requestAnimationFrame(loaderLoop);
 }
 
-function endLoader(){
+function endLoader(fast=false){
   var orb=$('#orbit');
-  if(orb){var r=orb.getBoundingClientRect();burstParticles(r.left+r.width/2,r.top+r.height/2,60)}
+  if(orb&&!fast){var r=orb.getBoundingClientRect();burstParticles(r.left+r.width/2,r.top+r.height/2,40)}
   pingMark();
+  const d1=fast?0:(reduce?0:100);
+  const d2=fast?40:(reduce?40:200);
   setTimeout(function(){
     var ld=$('#loader');
     if(ld){
       ld.classList.add('exit');
       setTimeout(function(){
         ld.style.display='none';
-        if(loaderDoneCb) loaderDoneCb();
-      },reduce?50:600);
+        if(loaderDoneCb){loaderDoneCb();loaderDoneCb=null}
+      },d2);
     }
-  },reduce?0:350);
+  },d1);
 }
 
 function startLoader(cb){
@@ -830,6 +960,16 @@ let cursorFrame=false;
 document.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||cursorFrame)return;cursorFrame=true;requestAnimationFrame(()=>{$('#cursorGlow').style.transform='translate('+(e.clientX-200)+'px,'+(e.clientY-200)+'px)';cursorFrame=false})});
 
 async function boot(){
+  let completed=false;
+  const fastFinish=()=>{
+    if(completed)return;
+    completed=true;
+    loaderFinished=true;
+    curP=100;
+    targetP=100;
+    endLoader(true);
+  };
+
   startLoader(function(){
     if(current){
       render();
@@ -840,13 +980,13 @@ async function boot(){
 
   try {
     await refresh();
+    fastFinish();
   } catch(e) {
+    fastFinish();
   }
 
-  setTimeout(function(){
-    loaderFinished=true;
-    targetP=100;
-  },1400);
+  // Safety fallback: maximum 500ms
+  setTimeout(fastFinish,500);
 }
 boot();
 async function pollLoop(){

@@ -212,6 +212,14 @@ body:has(#authPage) header{display:none}
   .voice-mic-btn{padding:8px 12px!important;border-radius:20px!important;font-size:12px!important}
   .inbox{height:calc(100dvh - 135px)!important;border-radius:18px!important}
   .chat-bottom{padding:10px!important}
+  /* Fix: make message form fully visible on mobile — rearrange send/mic buttons */
+  .message-form{flex-wrap:wrap!important}
+  .message-form textarea{order:1;flex:1 1 100%!important;min-width:0!important;margin-bottom:6px!important}
+  .message-form .voice-mic-btn{order:2;flex:0 0 auto!important}
+  .message-form .send-round{order:3;flex:0 0 auto!important}
+  /* Reduce voice mic button size on mobile to not block send */
+  .message-form .voice-mic-btn .mic-text{display:none!important}
+  .message-form .voice-mic-btn{padding:6px 10px!important;border-radius:50%!important;width:42px!important;height:42px!important}
 }
 body:has(#authPage) .mobile-bottom-nav,body:has(#authPage) .mobile-fab{display:none!important}
 
@@ -324,8 +332,10 @@ function notifications(){
     (ns.length?ns.map(n=>{
       const isFollowReq=n.type==='followRequest';
       const isFollowAcc=n.type==='followAccepted';
+      const isLike=n.type==='like';
+      const isComment=n.type==='comment';
       const isMsg=n.text&&n.text.includes('رسالة جديدة');
-      const iconBadge=isFollowReq?'👤':(isFollowAcc?'✓':(isMsg?'💬':'✦'));
+      const iconBadge=isFollowReq?'👤':(isFollowAcc?'✨':(isLike?'❤️':(isComment?'💬':(isMsg?'✉':'🔔'))));
       let actions='';
       if(isFollowReq&&n.fromId){
         actions='<div class="row" style="gap:6px;margin-top:10px">'+
@@ -336,6 +346,8 @@ function notifications(){
         actions='<button class="quiet" style="padding:6px 14px;font-size:12px;border:1px solid var(--line);margin-top:8px" onclick="go(\'friends\')">عرض الأصدقاء</button>';
       } else if(isMsg){
         actions='<button class="quiet" style="padding:6px 14px;font-size:12px;border:1px solid var(--line);margin-top:8px" onclick="go(\'messages\')">فتح المحادثة</button>';
+      } else if(isLike||isComment){
+        actions='<button class="quiet" style="padding:6px 14px;font-size:12px;border:1px solid var(--line);margin-top:8px" onclick="go(\'home\')">عرض المنشور</button>';
       }
       return '<div class="card" style="margin-bottom:12px;padding:14px;border-color:'+(n.read?'var(--line)':'var(--blue)')+';background:'+(n.read?'var(--card)':'var(--soft)')+'">'+
         '<div class="row" style="gap:12px;align-items:flex-start">'+

@@ -25,8 +25,9 @@ try {
   const mod = await import('postgres');
   postgres = mod.default || mod;
 } catch {
-  const postgresUrl = new URL('./node_modules/postgres/src/index.js', import.meta.url);
-  const mod = await import(postgresUrl.href);
+  // Fallback to local node_modules if import fails
+  const fallbackPath = new URL('../node_modules/postgres/src/index.js', import.meta.url);
+  const mod = await import(fallbackPath.href);
   postgres = mod.default || mod;
 }
 
@@ -173,8 +174,9 @@ const rate = async (key, max = 60) => {
 const blocked = (a, b) =>
   (a.blocked || []).includes(b.id) || (b.blocked || []).includes(a.id);
 const friends = (a, b) =>
-  a && b && a.active && b.active && !blocked(a, b) &&
-  a.following.includes(b.id) && b.following.includes(a.id);
+  Boolean(a && b && a.active && b.active && !blocked(a, b) &&
+  Array.isArray(a.following) && a.following.includes(b.id) &&
+  Array.isArray(b.following) && b.following.includes(a.id));
 const readable = (p, u, us) =>
   p.author === u.id || permission(u, 'content') ||
   friends(u, us.find(x => x.id === p.author));
@@ -267,6 +269,13 @@ async function action(db, u, a, us) {
       } else {
         p.likes = [...p.likes, id];
         await sql`INSERT INTO post_likes(post_id, user_id) VALUES(${p.id}, ${id}) ON CONFLICT DO NOTHING`;
+        if (p.author !== id) {
+          const notifId = randomUUID();
+          const notifText = 'أعجب ' + u.name + ' بمنشورك ❤️';
+          db.notifications.push({ id: notifId, to: p.author, fromId: id, text: notifText, type: 'like', read: false, time: Date.now() });
+          await sql`INSERT INTO notifications(id, recipient, text, read, type, from_id)
+            VALUES(${notifId}, ${p.author}, ${notifText}, false, 'like', ${id}) ON CONFLICT DO NOTHING`;
+        }
       }
       break;
     }
@@ -279,6 +288,14 @@ async function action(db, u, a, us) {
       p.comments.push({ id: cid, author: id, text: ctext });
       await sql`INSERT INTO comments(id, post_id, author, text, time)
         VALUES(${cid}, ${p.id}, ${id}, ${ctext}, ${now}) ON CONFLICT DO NOTHING`;
+      if (p.author !== id) {
+        const notifId = randomUUID();
+        const shortSnippet = ctext.length > 30 ? ctext.slice(0, 30) + '…' : ctext;
+        const notifText = 'علّق ' + u.name + ' على منشورك: "' + shortSnippet + '" 💬';
+        db.notifications.push({ id: notifId, to: p.author, fromId: id, text: notifText, type: 'comment', read: false, time: now });
+        await sql`INSERT INTO notifications(id, recipient, text, read, type, from_id)
+          VALUES(${notifId}, ${p.author}, ${notifText}, false, 'comment', ${id}) ON CONFLICT DO NOTHING`;
+      }
       break;
     }
     case 'deleteComment': {
@@ -311,22 +328,44 @@ async function action(db, u, a, us) {
     case 'follow': {
       const target = us.find(x => x.id === a.id && x.active && !blocked(u, x));
       if (!target || a.id === id) fail(400, 'حساب غير صالح');
+      if (!u.following) u.following = [];
+      if (!target.following) target.following = [];
+
       if (u.following.includes(a.id)) {
-        // Unfollow — also remove reverse if they haven't accepted
+        // Unfollow
         u.following = u.following.filter(x => x !== a.id);
+        if (u.pendingFollows) u.pendingFollows = u.pendingFollows.filter(x => x !== a.id);
         await sql`DELETE FROM follows WHERE follower_id=${id} AND following_id=${a.id}`;
-        // Remove any pending follow request notification
         db.notifications = db.notifications.filter(n =>
           !(n.to === a.id && n.type === 'followRequest' && n.fromId === id));
         await sql`DELETE FROM notifications WHERE recipient=${a.id} AND type='followRequest' AND from_id=${id}`;
+        await storeUser(u);
+      } else if (target.following.includes(id)) {
+        // Target ALREADY follows current user! Following back completes mutual friendship!
+        u.following.push(a.id);
+        if (u.pendingFollows) u.pendingFollows = u.pendingFollows.filter(x => x !== a.id);
+        if (target.pendingFollows) target.pendingFollows = target.pendingFollows.filter(x => x !== id);
+        await sql`INSERT INTO follows(follower_id, following_id) VALUES(${id}, ${a.id}) ON CONFLICT DO NOTHING`;
+        await Promise.all([storeUser(u), storeUser(target)]);
+
+        // Remove any pending follow request notifications between them
+        db.notifications = db.notifications.filter(n =>
+          !((n.to === id && n.fromId === a.id) || (n.to === a.id && n.fromId === id)));
+        await sql`DELETE FROM notifications WHERE (recipient=${id} AND from_id=${a.id}) OR (recipient=${a.id} AND from_id=${id})`;
+
+        // Notify both they are now friends!
+        const acceptNotifId = randomUUID();
+        const acceptText = 'أصبحتم أصدقاء الآن أنت و' + u.name + ' ✨';
+        db.notifications.push({ id: acceptNotifId, to: a.id, fromId: id, text: acceptText, type: 'followAccepted', read: false, time: Date.now() });
+        await sql`INSERT INTO notifications(id, recipient, text, read, type, from_id)
+          VALUES(${acceptNotifId}, ${a.id}, ${acceptText}, false, 'followAccepted', ${id}) ON CONFLICT DO NOTHING`;
       } else {
-        // Send follow request — don't add to following yet
+        // Send follow request
         const notifId = randomUUID();
         const notifText = 'أرسل لك ' + u.name + ' طلب متابعة ✦';
         db.notifications.push({ id: notifId, to: a.id, fromId: id, text: notifText, type: 'followRequest', read: false, time: Date.now() });
         await sql`INSERT INTO notifications(id, recipient, text, read, type, from_id)
           VALUES(${notifId}, ${a.id}, ${notifText}, false, 'followRequest', ${id}) ON CONFLICT DO NOTHING`;
-        // Mark as pending so sender knows
         if (!u.pendingFollows) u.pendingFollows = [];
         if (!u.pendingFollows.includes(a.id)) u.pendingFollows.push(a.id);
         await storeUser(u);

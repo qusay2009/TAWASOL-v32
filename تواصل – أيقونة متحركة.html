@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>تواصل – أيقونة متحركة</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600&family=Tajawal:wght@800&display=swap">
+<style>
+:root{--bg:#1b0a21;--ink:#fbf3ff;--muted:#bda8c9;--line:rgba(255,255,255,.14);--panel:rgba(255,255,255,.05);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:dark}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f4ecdc;--ink:#2b1234;--muted:#6c5778;--line:rgba(43,18,52,.15);--panel:rgba(255,255,255,.6);color-scheme:light}}
+:root[data-theme="dark"]{--bg:#1b0a21;--ink:#fbf3ff;--muted:#bda8c9;--line:rgba(255,255,255,.14);--panel:rgba(255,255,255,.05);color-scheme:dark}
+:root[data-theme="light"]{--bg:#f4ecdc;--ink:#2b1234;--muted:#6c5778;--line:rgba(43,18,52,.15);--panel:rgba(255,255,255,.6);color-scheme:light}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans Arabic",Tahoma,sans-serif;padding:2rem clamp(1rem,4vw,3rem);overflow-x:hidden}
+header{max-width:1100px;margin:0 auto 2rem;display:flex;justify-content:space-between;align-items:end;gap:1rem;flex-wrap:wrap}
+h1{margin:0;font-size:1.7rem}header p{margin:.3rem 0 0;color:var(--muted)}
+.bt{display:flex;gap:.5rem}.tb{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:99px;padding:.5rem 1rem;font:inherit;cursor:pointer}.tb:focus-visible,.s:focus-visible{outline:2px solid #b8f24b;outline-offset:2px}
+.grid{max-width:1100px;margin:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,310px),1fr));gap:1.25rem}
+.c{border:1px solid var(--line);border-radius:24px;background:var(--panel);padding:1rem;display:grid;gap:.9rem}
+.c h2{margin:.2rem .4rem 0;font-size:1.05rem}
+.s{position:relative;border-radius:16px;padding:1.5rem;display:grid;place-items:center;cursor:pointer;--a:#b8f24b;--b:#ff6f61;background:#1b0a21;color:#fbf3ff}
+.s.l{--a:#8fc41f;--b:#f0584a;background:#faf5ea;color:#2b1234}
+.s .ic svg{width:150px;height:150px}.s:hover .ic{transform:scale(1.06)}.ic{transition:transform .3s}
+.s small{position:absolute;inset-block-end:.5rem;inset-inline-end:.8rem;font-size:.72rem;opacity:.55}
+.row{display:flex;align-items:center;justify-content:center;gap:1rem;flex-wrap:wrap;--a:#b8f24b;--b:#ff6f61}
+.app{width:64px;height:64px;border-radius:16px;background:#1b0a21;display:grid;place-items:center;box-shadow:0 8px 24px -10px #000}.app svg{width:44px;height:44px}
+.app.g{background:#b8f24b;--a:#1b0a21}.app.r{border-radius:50%}
+.lock{display:flex;align-items:center;gap:.6rem;color:var(--ink)}.lock svg{width:44px;height:44px}
+.w{font-family:Tajawal,sans-serif;font-weight:800;font-size:1.5rem;line-height:1}
+</style></head><body>
+<header><div><h1>أيقونة تواصل المتحركة</h1><p>ثلاث نسخ متحركة بنفس الهوية. المسي أي أيقونة لإعادة تشغيلها.</p></div>
+<div class="bt"><button class="tb" id="all" type="button">تشغيل الكل</button><button class="tb" id="t" type="button">تبديل الخلفية</button></div></header>
+<main class="grid" id="g"></main>
+<script>
+var S={"A": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\" width=\"256\" height=\"256\" fill=\"none\"><title>تواصل</title><style>\n.a-b{stroke:var(--a,#b8f24b);stroke-width:3.5;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;transform-origin:32px 32px;animation:a-d 1s .1s ease-out forwards,a-br 3.6s 1.8s ease-in-out infinite}\n.a-l{stroke:var(--a,#b8f24b);stroke-width:2;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;animation:a-d .5s .9s ease-out forwards}\n.a-1,.a-2{transform-box:fill-box;transform-origin:center;animation:a-p .5s cubic-bezier(.3,1.8,.5,1) both,a-u 2.4s ease-in-out infinite}\n.a-1{fill:var(--a,#b8f24b);animation-delay:.7s,1.8s}.a-2{fill:var(--b,#ff6f61);animation-delay:.85s,3s}\n.a-t{fill:#fff;opacity:0;animation:a-tr 2.4s 1.8s ease-in-out infinite}\n@keyframes a-d{to{stroke-dashoffset:0}}@keyframes a-p{from{transform:scale(0)}}@keyframes a-u{50%{transform:scale(1.2)}}@keyframes a-br{50%{transform:scale(1.035)}}\n@keyframes a-tr{0%{transform:translate(23px,27px);opacity:0}15%,85%{opacity:1}100%{transform:translate(41px,33px);opacity:0}}\n@media (prefers-reduced-motion:reduce){*{animation:none!important;stroke-dashoffset:0!important;transform:none!important;opacity:1!important}.a-t{display:none}}</style>\n<path class=\"a-b\" pathLength=\"1\" d=\"M32 6A24 24 0 1 1 20.5 51L9 56L13.5 44.8A24 24 0 0 1 32 6Z\"/><path class=\"a-l\" pathLength=\"1\" d=\"M23 27L41 33\"/><circle class=\"a-1\" cx=\"23\" cy=\"27\" r=\"5.5\"/><circle class=\"a-2\" cx=\"41\" cy=\"33\" r=\"5.5\"/><circle class=\"a-t\" r=\"2.2\"/></svg>", "B": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\" width=\"256\" height=\"256\" fill=\"none\"><title>تواصل</title><style>\n.b-r{stroke:var(--a,#b8f24b);stroke-width:3.5;stroke-dasharray:1;stroke-dashoffset:1;animation:b-d 1.1s .1s ease-out forwards}\n.b-o{transform-origin:32px 32px;animation:b-s 6s 1.5s linear infinite}\n.b-l{stroke:var(--a,#b8f24b);stroke-width:2;stroke-linecap:round;animation:b-f .4s .9s ease-out both}\n.b-c,.b-m{transform-box:fill-box;transform-origin:center}\n.b-c{fill:var(--a,#b8f24b);animation:b-p .5s .6s cubic-bezier(.3,1.8,.5,1) both,b-u 2.4s 1.5s ease-in-out infinite}\n.b-m{fill:var(--b,#ff6f61);animation:b-p .5s .9s cubic-bezier(.3,1.8,.5,1) both}\n@keyframes b-d{to{stroke-dashoffset:0}}@keyframes b-p{from{transform:scale(0)}}@keyframes b-u{50%{transform:scale(1.25)}}@keyframes b-s{to{transform:rotate(360deg)}}@keyframes b-f{from{opacity:0}to{opacity:.6}}\n@media (prefers-reduced-motion:reduce){*{animation:none!important;stroke-dashoffset:0!important;transform:none!important;opacity:1!important}}</style>\n<circle class=\"b-r\" pathLength=\"1\" cx=\"32\" cy=\"32\" r=\"22\"/><g class=\"b-o\"><path class=\"b-l\" d=\"M32 32L47.6 16.4\"/><circle class=\"b-m\" cx=\"47.6\" cy=\"16.4\" r=\"6.5\"/></g><circle class=\"b-c\" cx=\"32\" cy=\"32\" r=\"6\"/></svg>", "C": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 64 64\" width=\"256\" height=\"256\" fill=\"none\"><title>تواصل</title><defs><clipPath id=\"cc\"><circle cx=\"25\" cy=\"32\" r=\"18\"/></clipPath></defs><style>\n.c-1,.c-2{stroke-width:3.5;stroke-dasharray:1;stroke-dashoffset:1;animation:c-d 1s ease-out forwards}\n.c-1{stroke:var(--a,#b8f24b)}.c-2{stroke:var(--b,#ff6f61);animation-delay:.25s}\n.c-i{fill:var(--a,#b8f24b);opacity:0;animation:c-f .6s 1.1s ease-out forwards,c-h 2.4s 1.8s ease-in-out infinite alternate}\n.c-g{transform-origin:32px 32px;animation:c-br 3.6s 1.8s ease-in-out infinite}\n@keyframes c-d{to{stroke-dashoffset:0}}@keyframes c-f{to{opacity:.9}}@keyframes c-h{from{opacity:.55}to{opacity:1}}@keyframes c-br{50%{transform:scale(1.045)}}\n@media (prefers-reduced-motion:reduce){*{animation:none!important;stroke-dashoffset:0!important;transform:none!important;opacity:1!important}}</style>\n<g class=\"c-g\"><circle class=\"c-i\" cx=\"39\" cy=\"32\" r=\"18\" clip-path=\"url(#cc)\"/><circle class=\"c-1\" pathLength=\"1\" cx=\"25\" cy=\"32\" r=\"18\"/><circle class=\"c-2\" pathLength=\"1\" cx=\"39\" cy=\"32\" r=\"18\"/></g></svg>"};
+var T=[["A","فقاعة الحوار"],["B","المدار"],["C","التقاء الدائرتين"]];
+function ic(k){return '<div class="ic">'+S[k]+'</div>'}
+document.getElementById("g").innerHTML=T.map(function(x){var k=x[0];
+return '<article class="c"><h2>'+k+' · '+x[1]+'</h2>'+
+'<div class="s" tabindex="0" role="button" aria-label="إعادة تشغيل الحركة">'+ic(k)+'<small>داكن</small></div>'+
+'<div class="s l" tabindex="0" role="button" aria-label="إعادة تشغيل الحركة">'+ic(k)+'<small>نهاري</small></div>'+
+'<div class="row"><div class="app">'+S[k]+'</div><div class="app g">'+S[k]+'</div><div class="app r">'+S[k]+'</div></div>'+
+'</article>'}).join("");
+function replay(el){var i=el.querySelector(".ic");if(i)i.innerHTML=i.innerHTML}
+document.querySelectorAll(".s").forEach(function(s){s.onclick=function(){replay(s)};s.onkeydown=function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();replay(s)}}});
+document.getElementById("all").onclick=function(){document.querySelectorAll(".s,.app").forEach(function(e){if(e.classList.contains("s"))replay(e);else e.innerHTML=e.innerHTML})};
+document.getElementById("t").onclick=function(){var r=document.documentElement,c=r.getAttribute("data-theme")||(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");r.setAttribute("data-theme",c==="light"?"dark":"light")};
+document.addEventListener("visibilitychange",function(){document.documentElement.style.setProperty("--p",document.hidden?"paused":"running")});
+</script></body></html>

@@ -81,6 +81,11 @@ await sql`
     count INTEGER,
     until BIGINT
   )`;
+// Add new columns to notifications if not exist
+try { await sql`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'general'`; } catch {}
+try { await sql`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS from_id TEXT`; } catch {}
+// Add pendingFollows to accounts profile
+try { await sql`ALTER TABLE accounts ADD COLUMN IF NOT EXISTS pending_follows JSONB DEFAULT '[]'`; } catch {}
 
 // Seed initial state row if missing
 await sql`
@@ -151,7 +156,7 @@ const readable = (p, u, us) =>
   friends(u, us.find(x => x.id === p.author));
 const publicUser = x => ({
   id: x.id, name: x.name, photo: x.photo || '', bio: x.bio || '',
-  following: [], active: true, email: '', role: 'user'
+  following: [], active: true, email: '', role: 'user', pendingFollows: []
 });
 
 function view(db, u, us) {
@@ -162,6 +167,7 @@ function view(db, u, us) {
       x.id === u.id || permission(u, 'users') ? x : {
         ...publicUser(x),
         following: x.following.includes(u.id) ? [u.id] : [],
+        pendingFollows: (x.pendingFollows || []).includes(u.id) ? [u.id] : [],
         typing: x.typing?.to === u.id && x.typing.until > Date.now()
       }
     ),
@@ -277,21 +283,68 @@ async function action(db, u, a, us) {
       const target = us.find(x => x.id === a.id && x.active && !blocked(u, x));
       if (!target || a.id === id) fail(400, 'حساب غير صالح');
       if (u.following.includes(a.id)) {
+        // Unfollow — also remove reverse if they haven't accepted
         u.following = u.following.filter(x => x !== a.id);
         await sql`DELETE FROM follows WHERE follower_id=${id} AND following_id=${a.id}`;
+        // Remove any pending follow request notification
+        db.notifications = db.notifications.filter(n =>
+          !(n.to === a.id && n.type === 'followRequest' && n.fromId === id));
+        await sql`DELETE FROM notifications WHERE recipient=${a.id} AND type='followRequest' AND from_id=${id}`;
       } else {
-        u.following = [...u.following, a.id];
-        await sql`INSERT INTO follows(follower_id, following_id) VALUES(${id}, ${a.id}) ON CONFLICT DO NOTHING`;
-        const isMutual = (target.following || []).includes(id);
+        // Send follow request — don't add to following yet
         const notifId = randomUUID();
-        const notifText = isMutual ? ('أصبحتم أصدقاء الآن مع ' + u.name + ' ✨') : ('أرسل لك ' + u.name + ' طلب متابعة جديد ✦');
-        db.notifications.push({ id: notifId, to: a.id, text: notifText, read: false, time: Date.now() });
-        await sql`INSERT INTO notifications(id, recipient, text, read)
-          VALUES(${notifId}, ${a.id}, ${notifText}, false) ON CONFLICT DO NOTHING`;
+        const notifText = 'أرسل لك ' + u.name + ' طلب متابعة ✦';
+        db.notifications.push({ id: notifId, to: a.id, fromId: id, text: notifText, type: 'followRequest', read: false, time: Date.now() });
+        await sql`INSERT INTO notifications(id, recipient, text, read, type, from_id)
+          VALUES(${notifId}, ${a.id}, ${notifText}, false, 'followRequest', ${id}) ON CONFLICT DO NOTHING`;
+        // Mark as pending so sender knows
+        if (!u.pendingFollows) u.pendingFollows = [];
+        if (!u.pendingFollows.includes(a.id)) u.pendingFollows.push(a.id);
+        await storeUser(u);
       }
       const meInUs = us.find(x => x.id === id);
-      if (meInUs) meInUs.following = u.following;
-      await storeUser(u);
+      if (meInUs) { meInUs.following = u.following; meInUs.pendingFollows = u.pendingFollows; }
+      break;
+    }
+    case 'acceptFollow': {
+      // Current user accepts a follow request from a.id
+      const requester = us.find(x => x.id === a.id && x.active);
+      if (!requester) fail(404, 'غير موجود');
+      // Add requester to my followers (they follow me)
+      if (!requester.following) requester.following = [];
+      if (!requester.following.includes(id)) {
+        requester.following = [...requester.following, id];
+        await sql`INSERT INTO follows(follower_id, following_id) VALUES(${a.id}, ${id}) ON CONFLICT DO NOTHING`;
+        await storeUser(requester);
+      }
+      // Remove pending from requester
+      if (requester.pendingFollows) {
+        requester.pendingFollows = requester.pendingFollows.filter(x => x !== id);
+        await storeUser(requester);
+      }
+      // Remove the follow request notification
+      db.notifications = db.notifications.filter(n =>
+        !(n.to === id && n.type === 'followRequest' && n.fromId === a.id));
+      await sql`DELETE FROM notifications WHERE recipient=${id} AND type='followRequest' AND from_id=${a.id}`;
+      // Notify the requester they were accepted
+      const acceptNotifId = randomUUID();
+      const isMutualNow = (u.following || []).includes(a.id);
+      const acceptText = isMutualNow ? ('أصبحتم أصدقاء الآن أنت و' + u.name + ' ✨') : (u.name + ' قبل طلب متابعتك ✓');
+      db.notifications.push({ id: acceptNotifId, to: a.id, text: acceptText, type: 'followAccepted', read: false, time: Date.now() });
+      await sql`INSERT INTO notifications(id, recipient, text, read, type)
+        VALUES(${acceptNotifId}, ${a.id}, ${acceptText}, false, 'followAccepted') ON CONFLICT DO NOTHING`;
+      break;
+    }
+    case 'rejectFollow': {
+      // Current user rejects a follow request from a.id
+      const requester = us.find(x => x.id === a.id);
+      if (requester?.pendingFollows) {
+        requester.pendingFollows = requester.pendingFollows.filter(x => x !== id);
+        await storeUser(requester);
+      }
+      db.notifications = db.notifications.filter(n =>
+        !(n.to === id && n.type === 'followRequest' && n.fromId === a.id));
+      await sql`DELETE FROM notifications WHERE recipient=${id} AND type='followRequest' AND from_id=${a.id}`;
       break;
     }
     case 'block': {
@@ -330,6 +383,7 @@ async function action(db, u, a, us) {
     case 'message': {
       const target = find(us, a.to);
       if (!target || !target.active || blocked(u, target)) fail(403, 'لا يمكن إرسال الرسالة');
+      if (!friends(u, target)) fail(403, 'يجب أن تكونا أصدقاء (متابعة متبادلة) للمراسلة');
       const audio = a.audio ? await attachedMedia(a.audio, u, 'voice') : null;
       const msgId = randomUUID();
       const notifId = randomUUID();

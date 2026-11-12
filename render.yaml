@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: tawasol
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: postgresql://postgres.qdcchkjmcfhofabriokh:Qusai2009200@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres

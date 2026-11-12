@@ -229,6 +229,22 @@ body:has(#authPage) .mobile-bottom-nav,body:has(#authPage) .mobile-fab{display:n
 .speed-btn{background:rgba(255,255,255,.1);border:1px solid var(--line);border-radius:8px;padding:2px 8px;font-size:11px;font-weight:700;color:inherit;cursor:pointer;transition:transform .15s}
 .speed-btn:active{transform:scale(.92)}
 
+
+/* Custom WhatsApp / Telegram Style Voice Player */
+.voice-player{display:flex;align-items:center;gap:12px;padding:4px 2px;min-width:220px;max-width:280px;user-select:none}
+.voice-play-btn{width:40px;height:40px;border-radius:50%;background:#d3ef8a;color:#1c1120;border:0;display:grid;place-items:center;flex-shrink:0;cursor:pointer;box-shadow:0 4px 14px rgba(211,239,138,.35);transition:transform .15s,background .2s}
+.voice-play-btn:active{transform:scale(.92)}
+.bubble-wrap.mine .voice-play-btn{background:#1c1120;color:#d3ef8a;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.voice-play-btn svg{width:18px;height:18px;stroke:currentColor;fill:currentColor}
+.voice-details{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.voice-prog-bar{position:relative;height:5px;border-radius:4px;background:rgba(255,255,255,.18);cursor:pointer;overflow:hidden}
+.bubble-wrap.mine .voice-prog-bar{background:rgba(28,17,32,.2)}
+.voice-prog-fill{position:absolute;left:0;top:0;bottom:0;width:0%;border-radius:4px;background:#d3ef8a;transition:width .1s linear}
+.bubble-wrap.mine .voice-prog-fill{background:#1c1120}
+.voice-meta-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;opacity:.85;font-variant-numeric:tabular-nums}
+.voice-speed-pill{background:rgba(255,255,255,.12);border:0;border-radius:6px;padding:1px 6px;font-size:10px;font-weight:700;color:inherit;cursor:pointer}
+.bubble-wrap.mine .voice-speed-pill{background:rgba(28,17,32,.15)}
+
 </style></head><body>
 <main class="loader" id="loader" role="status" aria-live="polite" aria-busy="true">
 <canvas id="cv" aria-hidden="true"></canvas>
@@ -595,10 +611,103 @@ const el=$('#chatScroll');if(!el)return;const ms=db.messages.filter(m=>m.from===
 const signature=JSON.stringify(ms.map(m=>[m.id,m.readAt,m.deliveredAt]));if(!force&&signature===lastMessages)return;const near=el.scrollHeight-el.scrollTop-el.clientHeight<100,oldIds=new Set([...el.querySelectorAll('[data-msg]')].map(e=>e.dataset.msg));
 if(force)el.innerHTML='';
 for(const m of ms){const old=el.querySelector('[data-msg="'+m.id+'"]');const meta=new Date(m.time||Date.now()).toLocaleTimeString('ar-JO',{hour:'2-digit',minute:'2-digit'})+(m.from===current?' · '+(m.readAt?'تمت القراءة':m.deliveredAt?'تم التسليم':'أُرسلت'):'');if(old){old.querySelector('.bubble-meta').textContent=meta;continue}
-const d=document.createElement('div');d.className='bubble-wrap'+(m.from===current?' mine':'');d.dataset.msg=m.id;d.innerHTML='<div class="bubble">'+(m.audio?'<div class="voice-bubble"><span class="voice-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></span><audio controls preload="metadata" src="/api/media/'+esc(m.audio.id)+'"></audio><button class="speed-btn" onclick="cycleSpeed(this)" title="سرعة التشغيل">1×</button></div>':esc(m.text))+'</div><div class="bubble-meta">'+esc(meta)+'</div>';el.append(d)}
+const d=document.createElement('div');d.className='bubble-wrap'+(m.from===current?' mine':'');d.dataset.msg=m.id;d.innerHTML='<div class="bubble">'+(m.audio?renderVoicePlayer(m.audio.id,m.audio.duration):esc(m.text))+'</div><div class="bubble-meta">'+esc(meta)+'</div>';el.append(d)}
 if(force||near)el.scrollTop=el.scrollHeight;lastMessages=signature;
 }
 function cycleSpeed(b){const a=b.parentElement.querySelector('audio');a.playbackRate=a.playbackRate===1?1.5:a.playbackRate===1.5?2:1;b.textContent=a.playbackRate+'×'}
+
+function renderVoicePlayer(mid, dur=0){
+  const durSec = Math.round(dur||0);
+  const timeStr = String(Math.floor(durSec/60)).padStart(2,'0')+':'+String(durSec%60).padStart(2,'0');
+  return '<div class="voice-player" data-mid="'+esc(mid)+'">'+
+    '<button type="button" class="voice-play-btn" onclick="toggleVoicePlay(this,\''+esc(mid)+'\')" aria-label="تشغيل الصوت">'+
+      '<svg class="v-play-ico" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>'+
+      '<svg class="v-pause-ico" viewBox="0 0 24 24" style="display:none"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>'+
+    '</button>'+
+    '<div class="voice-details">'+
+      '<div class="voice-prog-bar" onclick="seekVoice(event,this)"><div class="voice-prog-fill"></div></div>'+
+      '<div class="voice-meta-row">'+
+        '<span class="v-time">'+timeStr+'</span>'+
+        '<button type="button" class="voice-speed-pill" onclick="cycleVoiceSpeed(this)">1×</button>'+
+      '</div>'+
+    '</div>'+
+    '<audio src="/api/media/'+esc(mid)+'" preload="metadata" ontimeupdate="onVoiceTimeUpdate(this)" onended="onVoiceEnded(this)"></audio>'+
+  '</div>';
+}
+
+let activeAudio = null;
+function toggleVoicePlay(btn, mid){
+  const player = btn.closest('.voice-player');
+  const audio = player.querySelector('audio');
+  if(!audio) return;
+
+  if(!audio.paused){
+    audio.pause();
+    updatePlayerBtnState(player, false);
+  } else {
+    // Pause any other playing voice note
+    if(activeAudio && activeAudio !== audio){
+      activeAudio.pause();
+      const prevPlayer = activeAudio.closest('.voice-player');
+      if(prevPlayer) updatePlayerBtnState(prevPlayer, false);
+    }
+    audio.play().then(()=>{
+      activeAudio = audio;
+      updatePlayerBtnState(player, true);
+    }).catch(e=>toast('تعذر تشغيل الصوت'));
+  }
+}
+
+function updatePlayerBtnState(player, isPlaying){
+  const playIco = player.querySelector('.v-play-ico');
+  const pauseIco = player.querySelector('.v-pause-ico');
+  if(playIco) playIco.style.display = isPlaying ? 'none' : 'block';
+  if(pauseIco) pauseIco.style.display = isPlaying ? 'block' : 'none';
+}
+
+function onVoiceTimeUpdate(audio){
+  const player = audio.closest('.voice-player');
+  if(!player) return;
+  const fill = player.querySelector('.voice-prog-fill');
+  const timeSpan = player.querySelector('.v-time');
+  const dur = audio.duration || 1;
+  const cur = audio.currentTime;
+  if(fill) fill.style.width = ((cur/dur)*100)+'%';
+  if(timeSpan){
+    const s = Math.floor(cur);
+    timeSpan.textContent = String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  }
+}
+
+function onVoiceEnded(audio){
+  const player = audio.closest('.voice-player');
+  if(!player) return;
+  updatePlayerBtnState(player, false);
+  const fill = player.querySelector('.voice-prog-fill');
+  if(fill) fill.style.width = '0%';
+  const timeSpan = player.querySelector('.v-time');
+  const dur = Math.round(audio.duration || 0);
+  if(timeSpan) timeSpan.textContent = String(Math.floor(dur/60)).padStart(2,'0')+':'+String(dur%60).padStart(2,'0');
+}
+
+function seekVoice(e, bar){
+  const rect = bar.getBoundingClientRect();
+  const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  const player = bar.closest('.voice-player');
+  const audio = player?.querySelector('audio');
+  if(audio && audio.duration){
+    audio.currentTime = ratio * audio.duration;
+  }
+}
+
+function cycleVoiceSpeed(btn){
+  const player = btn.closest('.voice-player');
+  const audio = player?.querySelector('audio');
+  if(!audio) return;
+  audio.playbackRate = audio.playbackRate === 1 ? 1.5 : (audio.playbackRate === 1.5 ? 2 : 1);
+  btn.textContent = audio.playbackRate + '×';
+}
+
 async function sendMessage(e){e.preventDefault();const input=e.target.elements.text,text=input.value.trim();if(!text||!chatId)return;input.value='';const tempId='temp-'+Date.now()+'-'+Math.random().toString(36).slice(2,6);const optMsg={id:tempId,from:current,to:chatId,text,time:Date.now()};db.messages.push(optMsg);paintMessages();try{const r=await request('action',{type:'message',to:chatId,text});db=r.db;paintMessages();}catch(e){db.messages=db.messages.filter(m=>m.id!==tempId);paintMessages();toast(e.message)}}
 let lastTyped=0;
 async function notifyTyping(){if(Date.now()-lastTyped<3500)return;lastTyped=Date.now();try{await request('action',{type:'typing',to:chatId})}catch{}}

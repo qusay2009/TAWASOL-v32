@@ -84,6 +84,94 @@ await sql`
     count INTEGER,
     until BIGINT
   )`;
+// Create auxiliary tables IF NOT EXISTS so direct SQL inserts never fail
+try {
+  await sql`CREATE TABLE IF NOT EXISTS messages (
+    id TEXT PRIMARY KEY,
+    sender TEXT NOT NULL,
+    receiver TEXT NOT NULL,
+    text TEXT,
+    audio JSONB,
+    time BIGINT,
+    delivered_at BIGINT,
+    read_at BIGINT
+  )`;
+} catch (e) { console.warn('Init messages table:', e.message); }
+try {
+  await sql`CREATE TABLE IF NOT EXISTS notifications (
+    id TEXT PRIMARY KEY,
+    recipient TEXT NOT NULL,
+    text TEXT NOT NULL,
+    read BOOLEAN DEFAULT false,
+    type TEXT DEFAULT 'general',
+    from_id TEXT
+  )`;
+} catch (e) { console.warn('Init notifications table:', e.message); }
+try {
+  await sql`CREATE TABLE IF NOT EXISTS posts (
+    id TEXT PRIMARY KEY,
+    author TEXT NOT NULL,
+    text TEXT,
+    image TEXT,
+    music JSONB,
+    time BIGINT
+  )`;
+} catch (e) { console.warn('Init posts table:', e.message); }
+try {
+  await sql`CREATE TABLE IF NOT EXISTS post_likes (
+    post_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    PRIMARY KEY (post_id, user_id)
+  )`;
+} catch (e) { console.warn('Init post_likes table:', e.message); }
+try {
+  await sql`CREATE TABLE IF NOT EXISTS comments (
+    id TEXT PRIMARY KEY,
+    post_id TEXT NOT NULL,
+    author TEXT NOT NULL,
+    text TEXT,
+    time BIGINT
+  )`;
+} catch (e) { console.warn('Init comments table:', e.message); }
+try {
+  await sql`CREATE TABLE IF NOT EXISTS follows (
+    follower_id TEXT NOT NULL,
+    following_id TEXT NOT NULL,
+    PRIMARY KEY (follower_id, following_id)
+  )`;
+} catch (e) { console.warn('Init follows table:', e.message); }
+try {
+  await sql`CREATE TABLE IF NOT EXISTS blocks (
+    blocker_id TEXT NOT NULL,
+    blocked_id TEXT NOT NULL,
+    PRIMARY KEY (blocker_id, blocked_id)
+  )`;
+} catch (e) { console.warn('Init blocks table:', e.message); }
+try {
+  await sql`CREATE TABLE IF NOT EXISTS groups (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    desc_text TEXT,
+    icon TEXT
+  )`;
+} catch (e) { console.warn('Init groups table:', e.message); }
+try {
+  await sql`CREATE TABLE IF NOT EXISTS group_members (
+    group_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    PRIMARY KEY (group_id, user_id)
+  )`;
+} catch (e) { console.warn('Init group_members table:', e.message); }
+try {
+  await sql`CREATE TABLE IF NOT EXISTS reports (
+    id TEXT PRIMARY KEY,
+    post_id TEXT,
+    by_user TEXT,
+    reason TEXT,
+    status TEXT
+  )`;
+} catch (e) { console.warn('Init reports table:', e.message); }
+
 // Add new columns to notifications if not exist
 try { await sql`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'general'`; } catch {}
 try { await sql`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS from_id TEXT`; } catch {}
@@ -162,7 +250,7 @@ const storeUser = async u => {
 };
 
 const getState = async (force = false) => {
-  if (!force && cachedState) {
+  if (!force && cachedState && (Date.now() - stateTime < 400)) {
     return cachedState;
   }
   const [row] = await sql`SELECT json FROM state WHERE id=1`;
@@ -292,8 +380,8 @@ async function action(db, u, a, us) {
       const pid = randomUUID();
       const now = Date.now();
       db.posts.unshift({ id: pid, author: id, text: content, image: image(a.image), music, likes: [], comments: [], time: now });
-      await sql`INSERT INTO posts(id, author, text, image, music, time)
-        VALUES(${pid}, ${id}, ${content}, ${image(a.image)}, ${sql.json(music)}, ${now}) ON CONFLICT DO NOTHING`;
+      sql`INSERT INTO posts(id, author, text, image, music, time)
+        VALUES(${pid}, ${id}, ${content}, ${image(a.image)}, ${sql.json(music)}, ${now}) ON CONFLICT DO NOTHING`.catch(() => {});
       break;
     }
     case 'like': {
@@ -301,16 +389,16 @@ async function action(db, u, a, us) {
       postAccess(p);
       if (p.likes.includes(id)) {
         p.likes = p.likes.filter(x => x !== id);
-        await sql`DELETE FROM post_likes WHERE post_id=${p.id} AND user_id=${id}`;
+        sql`DELETE FROM post_likes WHERE post_id=${p.id} AND user_id=${id}`.catch(() => {});
       } else {
         p.likes = [...p.likes, id];
-        await sql`INSERT INTO post_likes(post_id, user_id) VALUES(${p.id}, ${id}) ON CONFLICT DO NOTHING`;
+        sql`INSERT INTO post_likes(post_id, user_id) VALUES(${p.id}, ${id}) ON CONFLICT DO NOTHING`.catch(() => {});
         if (p.author !== id) {
           const notifId = randomUUID();
           const notifText = 'أعجب ' + u.name + ' بمنشورك ❤️';
           db.notifications.push({ id: notifId, to: p.author, fromId: id, text: notifText, type: 'like', read: false, time: Date.now() });
-          await sql`INSERT INTO notifications(id, recipient, text, read, type, from_id)
-            VALUES(${notifId}, ${p.author}, ${notifText}, false, 'like', ${id}) ON CONFLICT DO NOTHING`;
+          sql`INSERT INTO notifications(id, recipient, text, read, type, from_id)
+            VALUES(${notifId}, ${p.author}, ${notifText}, false, 'like', ${id}) ON CONFLICT DO NOTHING`.catch(() => {});
         }
       }
       break;
@@ -322,15 +410,15 @@ async function action(db, u, a, us) {
       const ctext = text(a.text, 1000);
       const now = Date.now();
       p.comments.push({ id: cid, author: id, text: ctext });
-      await sql`INSERT INTO comments(id, post_id, author, text, time)
-        VALUES(${cid}, ${p.id}, ${id}, ${ctext}, ${now}) ON CONFLICT DO NOTHING`;
+      sql`INSERT INTO comments(id, post_id, author, text, time)
+        VALUES(${cid}, ${p.id}, ${id}, ${ctext}, ${now}) ON CONFLICT DO NOTHING`.catch(() => {});
       if (p.author !== id) {
         const notifId = randomUUID();
         const shortSnippet = ctext.length > 30 ? ctext.slice(0, 30) + '…' : ctext;
         const notifText = 'علّق ' + u.name + ' على منشورك: "' + shortSnippet + '" 💬';
         db.notifications.push({ id: notifId, to: p.author, fromId: id, text: notifText, type: 'comment', read: false, time: now });
-        await sql`INSERT INTO notifications(id, recipient, text, read, type, from_id)
-          VALUES(${notifId}, ${p.author}, ${notifText}, false, 'comment', ${id}) ON CONFLICT DO NOTHING`;
+        sql`INSERT INTO notifications(id, recipient, text, read, type, from_id)
+          VALUES(${notifId}, ${p.author}, ${notifText}, false, 'comment', ${id}) ON CONFLICT DO NOTHING`.catch(() => {});
       }
       break;
     }
@@ -381,27 +469,27 @@ async function action(db, u, a, us) {
         u.following.push(a.id);
         if (u.pendingFollows) u.pendingFollows = u.pendingFollows.filter(x => x !== a.id);
         if (target.pendingFollows) target.pendingFollows = target.pendingFollows.filter(x => x !== id);
-        await sql`INSERT INTO follows(follower_id, following_id) VALUES(${id}, ${a.id}) ON CONFLICT DO NOTHING`;
+        sql`INSERT INTO follows(follower_id, following_id) VALUES(${id}, ${a.id}) ON CONFLICT DO NOTHING`.catch(() => {});
         await Promise.all([storeUser(u), storeUser(target)]);
 
         // Remove any pending follow request notifications between them
         db.notifications = db.notifications.filter(n =>
           !((n.to === id && n.fromId === a.id) || (n.to === a.id && n.fromId === id)));
-        await sql`DELETE FROM notifications WHERE (recipient=${id} AND from_id=${a.id}) OR (recipient=${a.id} AND from_id=${id})`;
+        sql`DELETE FROM notifications WHERE (recipient=${id} AND from_id=${a.id}) OR (recipient=${a.id} AND from_id=${id})`.catch(() => {});
 
         // Notify both they are now friends!
         const acceptNotifId = randomUUID();
         const acceptText = 'أصبحتم أصدقاء الآن أنت و' + u.name + ' ✨';
         db.notifications.push({ id: acceptNotifId, to: a.id, fromId: id, text: acceptText, type: 'followAccepted', read: false, time: Date.now() });
-        await sql`INSERT INTO notifications(id, recipient, text, read, type, from_id)
-          VALUES(${acceptNotifId}, ${a.id}, ${acceptText}, false, 'followAccepted', ${id}) ON CONFLICT DO NOTHING`;
+        sql`INSERT INTO notifications(id, recipient, text, read, type, from_id)
+          VALUES(${acceptNotifId}, ${a.id}, ${acceptText}, false, 'followAccepted', ${id}) ON CONFLICT DO NOTHING`.catch(() => {});
       } else {
         // Send follow request
         const notifId = randomUUID();
         const notifText = 'أرسل لك ' + u.name + ' طلب متابعة ✦';
         db.notifications.push({ id: notifId, to: a.id, fromId: id, text: notifText, type: 'followRequest', read: false, time: Date.now() });
-        await sql`INSERT INTO notifications(id, recipient, text, read, type, from_id)
-          VALUES(${notifId}, ${a.id}, ${notifText}, false, 'followRequest', ${id}) ON CONFLICT DO NOTHING`;
+        sql`INSERT INTO notifications(id, recipient, text, read, type, from_id)
+          VALUES(${notifId}, ${a.id}, ${notifText}, false, 'followRequest', ${id}) ON CONFLICT DO NOTHING`.catch(() => {});
         if (!u.pendingFollows) u.pendingFollows = [];
         if (!u.pendingFollows.includes(a.id)) u.pendingFollows.push(a.id);
         await storeUser(u);
@@ -420,7 +508,7 @@ async function action(db, u, a, us) {
       if (!requester.following) requester.following = [];
       if (!requester.following.includes(id)) {
         requester.following = [...requester.following, id];
-        await sql`INSERT INTO follows(follower_id, following_id) VALUES(${a.id}, ${id}) ON CONFLICT DO NOTHING`;
+        sql`INSERT INTO follows(follower_id, following_id) VALUES(${a.id}, ${id}) ON CONFLICT DO NOTHING`.catch(() => {});
       }
       // Remove pending from requester
       if (requester.pendingFollows) {
@@ -432,7 +520,7 @@ async function action(db, u, a, us) {
       if (!u.following) u.following = [];
       if (!u.following.includes(a.id)) {
         u.following = [...u.following, a.id];
-        await sql`INSERT INTO follows(follower_id, following_id) VALUES(${id}, ${a.id}) ON CONFLICT DO NOTHING`;
+        sql`INSERT INTO follows(follower_id, following_id) VALUES(${id}, ${a.id}) ON CONFLICT DO NOTHING`.catch(() => {});
       }
       await storeUser(u);
 
@@ -443,14 +531,14 @@ async function action(db, u, a, us) {
       // Remove the follow request notification
       db.notifications = db.notifications.filter(n =>
         !(n.to === id && n.type === 'followRequest' && n.fromId === a.id));
-      await sql`DELETE FROM notifications WHERE recipient=${id} AND type='followRequest' AND from_id=${a.id}`;
+      sql`DELETE FROM notifications WHERE recipient=${id} AND type='followRequest' AND from_id=${a.id}`.catch(() => {});
 
       // Notify the requester: you are now friends!
       const acceptNotifId = randomUUID();
       const acceptText = 'أصبحتم أصدقاء الآن أنت و' + u.name + ' ✨';
       db.notifications.push({ id: acceptNotifId, to: a.id, text: acceptText, type: 'followAccepted', read: false, time: Date.now() });
-      await sql`INSERT INTO notifications(id, recipient, text, read, type)
-        VALUES(${acceptNotifId}, ${a.id}, ${acceptText}, false, 'followAccepted') ON CONFLICT DO NOTHING`;
+      sql`INSERT INTO notifications(id, recipient, text, read, type)
+        VALUES(${acceptNotifId}, ${a.id}, ${acceptText}, false, 'followAccepted') ON CONFLICT DO NOTHING`.catch(() => {});
       break;
     }
     case 'rejectFollow': {
@@ -462,7 +550,7 @@ async function action(db, u, a, us) {
       }
       db.notifications = db.notifications.filter(n =>
         !(n.to === id && n.type === 'followRequest' && n.fromId === a.id));
-      await sql`DELETE FROM notifications WHERE recipient=${id} AND type='followRequest' AND from_id=${a.id}`;
+      sql`DELETE FROM notifications WHERE recipient=${id} AND type='followRequest' AND from_id=${a.id}`.catch(() => {});
       break;
     }
     case 'block': {
@@ -471,13 +559,13 @@ async function action(db, u, a, us) {
       u.blocked = u.blocked || [];
       if (u.blocked.includes(a.id)) {
         u.blocked = u.blocked.filter(x => x !== a.id);
-        await sql`DELETE FROM blocks WHERE blocker_id=${id} AND blocked_id=${a.id}`;
+        sql`DELETE FROM blocks WHERE blocker_id=${id} AND blocked_id=${a.id}`.catch(() => {});
       } else {
         u.blocked.push(a.id);
         u.following = u.following.filter(x => x !== a.id);
         target.following = target.following.filter(x => x !== id);
-        await sql`INSERT INTO blocks(blocker_id, blocked_id) VALUES(${id}, ${a.id}) ON CONFLICT DO NOTHING`;
-        await sql`DELETE FROM follows WHERE (follower_id=${id} AND following_id=${a.id}) OR (follower_id=${a.id} AND following_id=${id})`;
+        sql`INSERT INTO blocks(blocker_id, blocked_id) VALUES(${id}, ${a.id}) ON CONFLICT DO NOTHING`.catch(() => {});
+        sql`DELETE FROM follows WHERE (follower_id=${id} AND following_id=${a.id}) OR (follower_id=${a.id} AND following_id=${id})`.catch(() => {});
         await storeUser(target);
       }
       await storeUser(u);
@@ -485,11 +573,11 @@ async function action(db, u, a, us) {
     }
     case 'ackMessages':
       db.messages.filter(m => m.to === id && !m.deliveredAt).forEach(m => m.deliveredAt = Date.now());
-      await sql`UPDATE messages SET delivered_at=${Date.now()} WHERE receiver=${id} AND delivered_at IS NULL`;
+      sql`UPDATE messages SET delivered_at=${Date.now()} WHERE receiver=${id} AND delivered_at IS NULL`.catch(() => {});
       break;
     case 'readMessages':
       db.messages.filter(m => m.to === id && m.from === a.from).forEach(m => m.readAt = m.readAt || Date.now());
-      await sql`UPDATE messages SET read_at=${Date.now()} WHERE receiver=${id} AND sender=${a.from} AND read_at IS NULL`;
+      sql`UPDATE messages SET read_at=${Date.now()} WHERE receiver=${id} AND sender=${a.from} AND read_at IS NULL`.catch(() => {});
       break;
     case 'typing': {
       const target = find(us, a.to);
@@ -508,49 +596,49 @@ async function action(db, u, a, us) {
       const now = Date.now();
       const msgText = a.audio ? '' : text(a.text, 2000);
       db.messages.push({ id: msgId, from: id, to: a.to, text: msgText, audio, time: now, readAt: null });
-      await sql`INSERT INTO messages(id, sender, receiver, text, audio, time)
-        VALUES(${msgId}, ${id}, ${a.to}, ${msgText}, ${sql.json(audio)}, ${now}) ON CONFLICT DO NOTHING`;
+      sql`INSERT INTO messages(id, sender, receiver, text, audio, time)
+        VALUES(${msgId}, ${id}, ${a.to}, ${msgText}, ${sql.json(audio)}, ${now}) ON CONFLICT DO NOTHING`.catch(e => console.error('Insert msg error:', e.message));
       db.notifications.push({ id: notifId, to: a.to, text: 'رسالة جديدة من ' + u.name, read: false });
-      await sql`INSERT INTO notifications(id, recipient, text, read)
-        VALUES(${notifId}, ${a.to}, ${'رسالة جديدة من ' + u.name}, false) ON CONFLICT DO NOTHING`;
+      sql`INSERT INTO notifications(id, recipient, text, read)
+        VALUES(${notifId}, ${a.to}, ${'رسالة جديدة من ' + u.name}, false) ON CONFLICT DO NOTHING`.catch(e => console.error('Insert notif error:', e.message));
       break;
     }
     case 'readNotifications':
       db.notifications.filter(n => n.to === id).forEach(n => n.read = true);
-      await sql`UPDATE notifications SET read=true WHERE recipient=${id}`;
+      sql`UPDATE notifications SET read=true WHERE recipient=${id}`.catch(() => {});
       break;
     case 'group': {
       const gid = randomUUID();
       const gname = text(a.name, 70);
       const gdesc = text(a.desc, 180);
       db.groups.push({ id: gid, name: gname, desc: gdesc, icon: '✦', members: [id] });
-      await sql`INSERT INTO groups(id, name, desc_text, icon) VALUES(${gid}, ${gname}, ${gdesc}, '✦') ON CONFLICT DO NOTHING`;
-      await sql`INSERT INTO group_members(group_id, user_id) VALUES(${gid}, ${id}) ON CONFLICT DO NOTHING`;
+      sql`INSERT INTO groups(id, name, desc_text, icon) VALUES(${gid}, ${gname}, ${gdesc}, '✦') ON CONFLICT DO NOTHING`.catch(() => {});
+      sql`INSERT INTO group_members(group_id, user_id) VALUES(${gid}, ${id}) ON CONFLICT DO NOTHING`.catch(() => {});
       break;
     }
     case 'joinGroup': {
       const g = find(db.groups, a.id);
       if (g.members.includes(id)) {
         g.members = g.members.filter(x => x !== id);
-        await sql`DELETE FROM group_members WHERE group_id=${g.id} AND user_id=${id}`;
+        sql`DELETE FROM group_members WHERE group_id=${g.id} AND user_id=${id}`.catch(() => {});
       } else {
         g.members = [...g.members, id];
-        await sql`INSERT INTO group_members(group_id, user_id) VALUES(${g.id}, ${id}) ON CONFLICT DO NOTHING`;
+        sql`INSERT INTO group_members(group_id, user_id) VALUES(${g.id}, ${id}) ON CONFLICT DO NOTHING`.catch(() => {});
       }
       break;
     }
     case 'deleteGroup':
       if (u.role !== 'super') fail(403, 'غير مسموح');
       db.groups = db.groups.filter(g => g.id !== a.id);
-      await sql`DELETE FROM groups WHERE id=${a.id}`;
+      sql`DELETE FROM groups WHERE id=${a.id}`.catch(() => {});
       break;
     case 'report': {
       postAccess(find(db.posts, a.id));
       const repId = randomUUID();
       const reason = text(a.reason, 200);
       db.reports.push({ id: repId, post: a.id, by: id, reason, status: 'pending' });
-      await sql`INSERT INTO reports(id, post_id, by_user, reason, status)
-        VALUES(${repId}, ${a.id}, ${id}, ${reason}, 'pending') ON CONFLICT DO NOTHING`;
+      sql`INSERT INTO reports(id, post_id, by_user, reason, status)
+        VALUES(${repId}, ${a.id}, ${id}, ${reason}, 'pending') ON CONFLICT DO NOTHING`.catch(() => {});
       break;
     }
     case 'resolveReport': {
@@ -559,7 +647,7 @@ async function action(db, u, a, us) {
       if (a.remove) {
         if (!permission(u, 'content')) fail(403, 'غير مسموح');
         db.posts = db.posts.filter(p => p.id !== r.post);
-        await sql`DELETE FROM posts WHERE id=${r.post}`;
+        sql`DELETE FROM posts WHERE id=${r.post}`.catch(() => {});
       }
       r.status = 'resolved';
       await sql`UPDATE reports SET status='resolved' WHERE id=${a.id}`;
@@ -967,6 +1055,10 @@ http.createServer(async (req, res) => {
       getAccounts(false)
     ]);
     const result = await action(stateDb, u, body, us);
+
+    // Update in-memory cached state immediately so all concurrent / subsequent polls see it in 0ms
+    cachedState = stateDb;
+    stateTime = Date.now();
 
     // Persist to DB in the background without blocking the user response
     saveState(stateDb).catch(err => console.error('Save state err:', err));

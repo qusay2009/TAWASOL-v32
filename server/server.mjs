@@ -178,6 +178,12 @@ try { await sql`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS from_id TEXT`
 // Add pendingFollows and plain_pass to accounts table
 try { await sql`ALTER TABLE accounts ADD COLUMN IF NOT EXISTS pending_follows JSONB DEFAULT '[]'`; } catch {}
 try { await sql`ALTER TABLE accounts ADD COLUMN IF NOT EXISTS plain_pass TEXT DEFAULT ''`; } catch {}
+// Ensure media and messages have all columns
+try { await sql`ALTER TABLE media ADD COLUMN IF NOT EXISTS mime TEXT DEFAULT 'audio/wav'`; } catch {}
+try { await sql`ALTER TABLE media ADD COLUMN IF NOT EXISTS duration REAL DEFAULT 0`; } catch {}
+try { await sql`ALTER TABLE messages ADD COLUMN IF NOT EXISTS audio JSONB`; } catch {}
+try { await sql`ALTER TABLE messages ADD COLUMN IF NOT EXISTS delivered_at BIGINT`; } catch {}
+try { await sql`ALTER TABLE messages ADD COLUMN IF NOT EXISTS read_at BIGINT`; } catch {}
 
 // Seed initial state row if missing and force registration: true
 await sql`
@@ -335,28 +341,67 @@ const attachedMedia = async (id, u, kind) => {
   if (!id) return null;
   const mem = cachedMedia.get(id);
   if (mem) {
-    if (mem.owner !== u.id || mem.kind !== kind) fail(400, 'ملف غير صالح');
-    return { id: mem.id, duration: mem.duration };
+    if (String(mem.owner) !== String(u.id) || mem.kind !== kind) fail(400, 'ملف غير صالح');
+    return { id: mem.id, duration: mem.duration || 0 };
   }
   const [m] = await sql`SELECT id,owner,kind,duration FROM media WHERE id=${id}`;
-  if (!m || m.owner !== u.id || m.kind !== kind) fail(400, 'ملف غير صالح');
-  return { id: m.id, duration: m.duration };
+  if (!m || String(m.owner) !== String(u.id) || m.kind !== kind) fail(400, 'ملف غير صالح');
+  return { id: m.id, duration: m.duration || 0 };
 };
 
-function wav(bytes, max) {
-  if (bytes.length < 44 || bytes.toString('ascii', 0, 4) !== 'RIFF' ||
-    bytes.toString('ascii', 8, 12) !== 'WAVE' ||
-    bytes.toString('ascii', 12, 16) !== 'fmt ' ||
-    bytes.readUInt32LE(16) !== 16 || bytes.readUInt16LE(20) !== 1 ||
-    bytes.readUInt16LE(22) !== 1 || bytes.readUInt16LE(34) !== 16 ||
-    bytes.toString('ascii', 36, 40) !== 'data') fail(400, 'الصوت يجب أن يكون WAV PCM أحادي القناة');
-  const sr = bytes.readUInt32LE(24), size = bytes.readUInt32LE(40);
-  if (sr < 8000 || sr > 48000 || bytes.readUInt16LE(32) !== 2 ||
-    bytes.readUInt32LE(28) !== sr * 2 || size !== bytes.length - 44 ||
-    size % 2 || bytes.readUInt32LE(4) !== bytes.length - 8) fail(400, 'بنية الصوت غير صالحة');
-  const duration = size / (sr * 2);
-  if (duration <= 0 || duration > max + 0.1) fail(400, 'مدة الصوت تتجاوز الحد');
-  return duration;
+function analyzeAudio(bytes, max, kind = 'voice') {
+  if (!bytes || bytes.length < 16) fail(400, 'ملف صوتي غير صالح أو فارغ');
+
+  // Check if standard WAV / RIFF
+  if (bytes.length >= 44 && bytes.toString('ascii', 0, 4) === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WAVE') {
+    let offset = 12;
+    let sampleRate = 22050;
+    let channels = 1;
+    let bitsPerSample = 16;
+    let dataSize = bytes.length - 44;
+
+    while (offset + 8 <= bytes.length) {
+      const chunkId = bytes.toString('ascii', offset, offset + 4);
+      const chunkSize = bytes.readUInt32LE(offset + 4);
+      if (chunkId === 'fmt ' && chunkSize >= 16) {
+        channels = bytes.readUInt16LE(offset + 10) || 1;
+        sampleRate = bytes.readUInt32LE(offset + 12) || 22050;
+        bitsPerSample = bytes.readUInt16LE(offset + 22) || 16;
+      } else if (chunkId === 'data') {
+        dataSize = chunkSize || (bytes.length - (offset + 8));
+        break;
+      }
+      offset += 8 + chunkSize;
+    }
+
+    const bytesPerSec = sampleRate * channels * (bitsPerSample / 8) || 44100;
+    let duration = dataSize / bytesPerSec;
+    if (!Number.isFinite(duration) || duration <= 0) duration = 1;
+    if (duration > max + 5) fail(400, 'مدة الصوت تتجاوز الحد المسموح');
+    return { duration: Math.min(duration, max), mime: 'audio/wav' };
+  }
+
+  // Check WebM / Matroska audio (\x1A\x45\xDF\xA3)
+  if (bytes[0] === 0x1A && bytes[1] === 0x45 && bytes[2] === 0xDF && bytes[3] === 0xA3) {
+    return { duration: Math.min(Math.max(1, bytes.length / 4000), max), mime: 'audio/webm' };
+  }
+
+  // Check OGG (OggS)
+  if (bytes.toString('ascii', 0, 4) === 'OggS') {
+    return { duration: Math.min(Math.max(1, bytes.length / 4500), max), mime: 'audio/ogg' };
+  }
+
+  // Check MP3 (ID3 or frame sync 0xFF)
+  if (bytes.toString('ascii', 0, 3) === 'ID3' || (bytes[0] === 0xFF && (bytes[1] & 0xE0) === 0xE0)) {
+    return { duration: Math.min(Math.max(1, bytes.length / 16000), max), mime: 'audio/mpeg' };
+  }
+
+  // Check MP4 / M4A / AAC
+  if (bytes.length >= 8 && bytes.toString('ascii', 4, 8) === 'ftyp') {
+    return { duration: Math.min(Math.max(1, bytes.length / 16000), max), mime: 'audio/mp4' };
+  }
+
+  return { duration: Math.min(Math.max(1, bytes.length / 44100), max), mime: 'audio/wav' };
 }
 
 async function action(db, u, a, us) {
@@ -591,10 +636,19 @@ async function action(db, u, a, us) {
       if (!target || !target.active || blocked(u, target)) fail(403, 'لا يمكن إرسال الرسالة');
       if (!friends(u, target)) fail(403, 'يجب أن تكونا أصدقاء (متابعة متبادلة) للمراسلة');
       const audio = a.audio ? await attachedMedia(a.audio, u, 'voice') : null;
-      const msgId = randomUUID();
-      const notifId = randomUUID();
       const now = Date.now();
       const msgText = a.audio ? '' : text(a.text, 2000);
+
+      // Deduplicate accidental double submissions within 2.5 seconds
+      const isDup = !audio && db.messages.some(m =>
+        m.from === id && m.to === a.to && m.text === msgText && (now - m.time) < 2500
+      );
+      if (isDup) {
+        break;
+      }
+
+      const msgId = randomUUID();
+      const notifId = randomUUID();
       db.messages.push({ id: msgId, from: id, to: a.to, text: msgText, audio, time: now, readAt: null });
       sql`INSERT INTO messages(id, sender, receiver, text, audio, time)
         VALUES(${msgId}, ${id}, ${a.to}, ${msgText}, ${sql.json(audio)}, ${now}) ON CONFLICT DO NOTHING`.catch(e => console.error('Insert msg error:', e.message));
@@ -977,8 +1031,9 @@ http.createServer(async (req, res) => {
       if (!m) fail(404, 'غير موجود');
       const db = await getState();
       const us = await getAccounts();
-      const allowed = db.posts.some(p => p.music?.id === mid && readable(p, u, us)) ||
-        db.messages.some(x => x.audio?.id === mid && (x.from === u.id || x.to === u.id));
+      const allowed = String(m.owner) === String(u.id) ||
+        db.posts.some(p => p.music?.id === mid && readable(p, u, us)) ||
+        db.messages.some(x => ((x.audio?.id === mid || x.audio === mid) && (x.from === u.id || x.to === u.id)));
       if (!allowed) fail(403, 'غير مسموح');
 
       const buf = Buffer.isBuffer(m.bytes) ? m.bytes : Buffer.from(m.bytes);
@@ -1022,19 +1077,21 @@ http.createServer(async (req, res) => {
 
     // ── Upload ──
     if (path === '/api/upload') {
-      await rate('upload:' + u.id, 50);
+      await rate('upload:' + u.id, 60);
       if (!['voice', 'music'].includes(body.kind) || typeof body.data !== 'string') fail(400, 'ملف غير صالح');
       const b64 = body.data.replace(/\s+/g, '');
       if (!/^[A-Za-z0-9+/=]+$/.test(b64)) fail(400, 'ملف غير صالح');
       const bytes = Buffer.from(b64, 'base64');
-      if (bytes.length > 12000000) fail(413, 'الصوت كبير');
-      const duration = wav(bytes, body.kind === 'voice' ? 120 : 30);
+      if (bytes.length > 15000000) fail(413, 'حجم الصوت كبير جداً');
+      const maxSec = body.kind === 'voice' ? 120 : 30;
+      const { duration, mime } = analyzeAudio(bytes, maxSec, body.kind);
       const mid = randomUUID();
       // Cache immediately in RAM for 0ms voice attachment and playback
-      cachedMedia.set(mid, { id: mid, owner: u.id, kind: body.kind, mime: 'audio/wav', bytes, duration });
+      cachedMedia.set(mid, { id: mid, owner: u.id, kind: body.kind, mime, bytes, duration });
       sql`INSERT INTO media(id,owner,kind,mime,bytes,duration)
-        VALUES(${mid},${u.id},${body.kind},'audio/wav',${bytes},${duration})`.catch(err => console.error('Media insert err:', err));
-      return reply(200, { id: mid, duration });
+        VALUES(${mid},${u.id},${body.kind},${mime},${bytes},${duration})
+        ON CONFLICT(id) DO UPDATE SET bytes=EXCLUDED.bytes, mime=EXCLUDED.mime, duration=EXCLUDED.duration`.catch(err => console.error('Media insert err:', err));
+      return reply(200, { id: mid, duration, mime });
     }
 
     // ── Logout ──
